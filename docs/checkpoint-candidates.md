@@ -1,6 +1,6 @@
 # Candidate pretrained models for the GPU experiment
 
-Checked 2026-11-04. These are candidates, not a verified matched checkpoint set.
+These are candidates, not a verified matched checkpoint set.
 These checkpoints have not been evaluated in this project.
 
 ## Original and retrained control

@@ -1,10 +1,7 @@
 # Unlearning and weight faults: findings and limitations
 
-Updated: **November 5, 2026**. This summary covers the digits classifier and
-ResNet-18 on CIFAR-10. All three CIFAR-10 seeds have completed frozen test
-evaluation, with recall of 34.2%, 0.0%, and 6.5%. Only exploratory seed 0 passes
-all criteria; neither independent replication passes. No LLMs or physical GPU
-faults were tested.
+This summary covers the digits classifier and ResNet-18 on CIFAR-10. 
+No LLMs or physical GPU faults were tested.
 
 ## Main findings
 
