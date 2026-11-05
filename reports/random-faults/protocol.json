@@ -1,0 +1,34 @@
+{
+  "config": {
+    "reference": "C:\\Users\\ltumi\\LORENZO\\Probe\\unlearning-pilot\\reports\\laptop\\digits-main.json.gz",
+    "output_dir": "work\\random-faults\\full",
+    "seeds": [
+      0,
+      1,
+      2
+    ],
+    "classes": [
+      0,
+      1,
+      2
+    ],
+    "single_trials": 10000,
+    "stress_trials": 1000
+  },
+  "thresholds": {
+    "forget_gain": 0.2,
+    "retain_loss": 0.02,
+    "fpr_rise": 0.01
+  },
+  "reference_sha256": "5e4b4001e2070de1e8a8d5717753ebe8b99c6237350c970e05152ca114bae38b",
+  "pilot_sha256": "93eaa7a948486fdfa3417d29af0a7b2d425d14ccea9a7049cc471929b28f4c44",
+  "campaign_sha256": "d78c727753911e9b7a05e292b1ac281cb7bbf24df6847c81dfc3d416d16ce275",
+  "environment": {
+    "python": "3.12.7",
+    "numpy": "2.4.4",
+    "scipy": "1.16.0",
+    "sklearn": "1.6.1"
+  },
+  "fault_model": "uniform FP32 parameter-storage bit flips; biases included; no filtering; persistent throughout test batch; independent reset between trials; multi-flip budgets are stress tests, not physical error distributions",
+  "confidence": "per fixed model and budget, one-sided exact 95% binomial upper limit; conditional on this sampling model, not on hours of hardware use"
+}

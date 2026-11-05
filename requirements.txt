@@ -1,0 +1,4 @@
+# Install a matching CUDA-enabled pair using https://pytorch.org/get-started/locally/
+# These lower bounds do not pin a particular CUDA wheel or promise every newer pairing works.
+torch>=2.7
+torchvision>=0.22

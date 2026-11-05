@@ -1,0 +1,7 @@
+{
+  "trial_records_verified": 108000,
+  "model_evaluations_verified": 324000,
+  "independent_fault_replays": 663,
+  "unit_tests_passed": 4,
+  "passed": true
+}
