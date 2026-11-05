@@ -1,6 +1,6 @@
 """Uniform, unfiltered FP32 storage fault campaigns on the CPU digits fixtures.
 
-See RANDOM_FAULTS.md. Fault probabilities here are conditional on an injected
+See docs/random-flips.md. Fault probabilities here are conditional on an injected
 error reaching parameter storage, not rates of naturally occurring GPU errors.
 """
 import os
@@ -20,7 +20,7 @@ import numpy as np
 import scipy
 from scipy.stats import beta
 from threadpoolctl import threadpool_limits
-import cpu_digits as pilot
+import targeted_flips_cpu as digits
 
 
 MODELS = ('original', 'unlearned', 'retrained')
@@ -55,7 +55,7 @@ def decode(bit_id, keys, ends):
 
 
 def evaluate(m, x, y, c):
-    _, prob = pilot.forward(m, x)
+    _, prob = digits.forward(m, x)
     if not np.isfinite(prob).all():
         return {'valid': False}, None
     pred = prob.argmax(1)
@@ -86,23 +86,23 @@ def classify(met, baseline, pred, base_pred):
 
 def fixtures(record):
     """Reconstruct the saved trained fixtures and check their test predictions."""
-    x, y = pilot.load_digits(return_X_y=True)
+    x, y = digits.load_digits(return_X_y=True)
     x = (x/16).astype('float32')
     c, seed = record['forget_class'], record['seed']
     ids = {k: np.array(v) for k, v in record['splits'].items()}
     training, sel, test = ids['training'], ids['selection'], ids['test']
     selection = (x[sel], y[sel])
-    original, original_met, _ = pilot.train(pilot.initial(seed), x[training], y[training],
+    original, original_met, _ = digits.train_model(digits.initialize_model(seed), x[training], y[training],
                                            selection, c, 100, 0.003, seed)
     keep = training[y[training] != c]
-    retrained, _, _ = pilot.train(pilot.initial(seed), x[keep], y[keep],
+    retrained, _, _ = digits.train_model(digits.initialize_model(seed), x[keep], y[keep],
                                  selection, c, 100, 0.003, seed)
-    unlearned, _, _ = pilot.train(pilot.clone(original), x[training], y[training],
+    unlearned, _, _ = digits.train_model(digits.copy_model(original), x[training], y[training],
                                  selection, c, 30, record['unlearn_lr'], seed+400,
                                  True, original_met)
     models = {'original': original, 'unlearned': unlearned, 'retrained': retrained}
     for name, m in models.items():
-        if m is None or pilot.metrics(m, x[test], y[test], c) != record['baseline'][name]:
+        if m is None or digits.evaluate_model(m, x[test], y[test], c) != record['baseline'][name]:
             raise RuntimeError(f'{name} fixture does not reproduce saved baseline. '
                                'Check source and dependency versions; do not silently mix fixtures.')
     return models, x[test], y[test]
@@ -139,7 +139,7 @@ def campaign(models, x, y, c, seed, budget, n, log, keys, ends):
     stats = {name: new_stats() for name in MODELS}
     # Independent random trials, with the same bit locations paired across the three models.
     rng = np.random.default_rng(9012345 + c*65537 + seed*257 + budget*100003)
-    before = {name: pilot.clone(m) for name, m in models.items()}
+    before = {name: digits.copy_model(m) for name, m in models.items()}
     for trial in range(n):
         bits = (rng.integers(0, ends[-1], size=1) if budget == 1 else
                 rng.choice(int(ends[-1]), size=budget, replace=False))
@@ -153,17 +153,17 @@ def campaign(models, x, y, c, seed, budget, n, log, keys, ends):
         for name, m in models.items():
             try:
                 for k, i, bit in decoded:
-                    pilot.toggle(m, k, i, bit)
+                    digits.toggle_bit(m, k, i, bit)
                 met, pred = evaluate(m, x, y, c)
             finally:
                 for k, i, bit in decoded:
-                    pilot.toggle(m, k, i, bit)
+                    digits.toggle_bit(m, k, i, bit)
             category = classify(met, baseline[name][0], pred, baseline[name][1])
             observe(stats[name], met, baseline[name][0], category, bits, field)
             row['models'][name] = met | {'outcome': category}
         log.write(json.dumps(row, separators=(',', ':'), allow_nan=False)+'\n')
     for name, m in models.items():
-        pilot.audit(before[name], m, [])
+        digits.audit_bit_changes(before[name], m, [])
         s = stats[name]
         assert sum(s['outcomes'].values()) == n
         s['selective_recovery_rate'] = s['outcomes']['selective_recovery']/n
@@ -176,16 +176,16 @@ def campaign(models, x, y, c, seed, budget, n, log, keys, ends):
 
 
 def self_check():
-    m = pilot.initial(19)
+    m = digits.initialize_model(19)
     keys, ends = layout(m)
     assert ends[-1] == 4810*32
     for b in [0, 31, 32, 4096*32, int(ends[-1])-1]:
         k, i, bit = decode(b, keys, ends)
-        before = pilot.clone(m)
-        pilot.toggle(m, k, i, bit)
-        pilot.audit(before, m, [{'parameter': k, 'index': i, 'bit': bit}])
-        pilot.toggle(m, k, i, bit)
-        pilot.audit(before, m, [])
+        before = digits.copy_model(m)
+        digits.toggle_bit(m, k, i, bit)
+        digits.audit_bit_changes(before, m, [{'parameter': k, 'index': i, 'bit': bit}])
+        digits.toggle_bit(m, k, i, bit)
+        digits.audit_bit_changes(before, m, [])
     base = {'valid': True, 'forget': 0.0, 'retain': 0.95, 'fpr': 0.0}
     pred = np.array([0,1])
     assert classify(base, base, pred, pred) == 'unchanged_predictions'
@@ -197,8 +197,8 @@ def self_check():
 
 def main():
     p = argparse.ArgumentParser(description=__doc__)
-    p.add_argument('--reference', type=Path, default=Path('reports/laptop/digits-main.json.gz'))
-    p.add_argument('--output-dir', type=Path, default=Path('runs/random-faults'))
+    p.add_argument('--reference', type=Path, default=Path('reports/targeted-flips/cpu/digits-main.json.gz'))
+    p.add_argument('--output-dir', type=Path, default=Path('runs/random-flips'))
     p.add_argument('--seeds', type=int, nargs='+', default=[0,1,2])
     p.add_argument('--classes', type=int, nargs='+', default=[0,1,2])
     p.add_argument('--single-trials', type=int, default=10000)
@@ -214,11 +214,13 @@ def main():
         p.error('Requested class/seed fixtures missing from reference.')
     self_check()
     a.output_dir.mkdir(parents=True)
+    # "pilot_sha256" identifies the shared CPU model/training implementation.
+    # Keep this protocol key consistent with the archived campaign records.
     protocol = {'config': {k: str(v) if isinstance(v,Path) else v for k,v in vars(a).items()},
                 'thresholds': THRESHOLDS, 'reference_sha256': sha(a.reference),
-                'pilot_sha256': sha(pilot.__file__), 'campaign_sha256': sha(__file__),
+                'pilot_sha256': sha(digits.__file__), 'campaign_sha256': sha(__file__),
                 'environment': {'python': platform.python_version(), 'numpy': np.__version__,
-                                'scipy': scipy.__version__, 'sklearn': pilot.sklearn.__version__},
+                                'scipy': scipy.__version__, 'sklearn': digits.sklearn.__version__},
                 'fault_model': 'uniform FP32 parameter-storage bit flips; biases included; no filtering; '
                                'persistent throughout test batch; independent reset between trials; '
                                'multi-flip budgets are stress tests, not physical error distributions',

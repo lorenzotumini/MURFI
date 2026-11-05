@@ -1,0 +1,11 @@
+{
+  "algorithm": "beam",
+  "stop_reason": "time_limit",
+  "depth_reached": 6,
+  "selected_bits": 6,
+  "elapsed_seconds": 180.08965193999938,
+  "candidate_evals": 1156,
+  "screen_evals": 1113,
+  "full_validations": 92,
+  "search_incomplete": true
+}

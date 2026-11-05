@@ -1,0 +1,216 @@
+{
+  "protocol_sha256": "e96383de33380739c6a9a6cd47052d7eaad4e67a9575e3c4eeeb120218c710a3",
+  "requested_seeds": [
+    0,
+    1,
+    2
+  ],
+  "outcomes": {
+    "0": {
+      "status": "complete",
+      "root": "/home/lorenzo/Projects/MURFI/runs/resnet18-seed0-class0-20261105-021912",
+      "test_result": "/home/lorenzo/Projects/MURFI/runs/resnet18-seed0-class0-20261105-021912/campaign-wide-20261105-114839-wide-bit-change-nohead/frozen-test-results.json",
+      "unlearned": {
+        "bits": 5,
+        "forget_accuracy": 0.34200000762939453,
+        "retain_accuracy": 0.9323332905769348,
+        "forget_gain": 0.34200000762939453,
+        "retain_drop": 0.013333439826965332,
+        "fpr": 0.008555555555555556,
+        "fpr_rise": 0.008555555555555556,
+        "passes_screen": true,
+        "correct_forget": 342,
+        "forget_count": 1000,
+        "search_diagnostics": {
+          "algorithm": "beam",
+          "stop_reason": "full_validation_limit",
+          "depth_reached": 5,
+          "selected_bits": 5,
+          "elapsed_seconds": 138.8142177890004,
+          "candidate_evals": 1088,
+          "screen_evals": 1083,
+          "full_validations": 96,
+          "search_incomplete": true
+        }
+      },
+      "retrained": {
+        "bits": 0,
+        "forget_accuracy": 0.0,
+        "retain_accuracy": 0.9453333616256714,
+        "forget_gain": 0.0,
+        "retain_drop": 0.0,
+        "fpr": 0.0,
+        "fpr_rise": 0.0,
+        "passes_screen": false,
+        "correct_forget": 0,
+        "forget_count": 1000,
+        "search_diagnostics": {
+          "algorithm": "beam",
+          "stop_reason": "no_acceptable_extensions",
+          "depth_reached": 4,
+          "selected_bits": 0,
+          "elapsed_seconds": 107.45921093000015,
+          "candidate_evals": 832,
+          "screen_evals": 568,
+          "full_validations": 94,
+          "search_incomplete": false
+        }
+      },
+      "random": {
+        "trials": 20,
+        "valid_trials": 20,
+        "forget_max": 0.0
+      },
+      "recovery_gap_vs_retrained": 0.34200000762939453
+    },
+    "1": {
+      "status": "complete",
+      "root": "/home/lorenzo/Projects/MURFI/runs/frozen-confirmation-20261105-121007/seed1-class0",
+      "test_result": "/home/lorenzo/Projects/MURFI/runs/frozen-confirmation-20261105-121007/seed1-class0/frozen-search/frozen-test-results.json",
+      "unlearned": {
+        "bits": 0,
+        "forget_accuracy": 0.0,
+        "retain_accuracy": 0.948888897895813,
+        "forget_gain": 0.0,
+        "retain_drop": 0.0,
+        "fpr": 0.0,
+        "fpr_rise": 0.0,
+        "passes_screen": false,
+        "correct_forget": 0,
+        "forget_count": 1000,
+        "search_diagnostics": {
+          "algorithm": "beam",
+          "stop_reason": "candidate_evaluation_limit",
+          "depth_reached": 6,
+          "selected_bits": 0,
+          "elapsed_seconds": 138.64307933099917,
+          "candidate_evals": 1280,
+          "screen_evals": 1208,
+          "full_validations": 63,
+          "search_incomplete": true
+        }
+      },
+      "retrained": {
+        "bits": 0,
+        "forget_accuracy": 0.0,
+        "retain_accuracy": 0.9476667046546936,
+        "forget_gain": 0.0,
+        "retain_drop": 0.0,
+        "fpr": 0.0,
+        "fpr_rise": 0.0,
+        "passes_screen": false,
+        "correct_forget": 0,
+        "forget_count": 1000,
+        "search_diagnostics": {
+          "algorithm": "beam",
+          "stop_reason": "full_validation_limit",
+          "depth_reached": 5,
+          "selected_bits": 0,
+          "elapsed_seconds": 137.97801631600123,
+          "candidate_evals": 1216,
+          "screen_evals": 897,
+          "full_validations": 96,
+          "search_incomplete": true
+        }
+      },
+      "random": {
+        "trials": 20,
+        "valid_trials": 20,
+        "forget_max": 0.0
+      },
+      "recovery_gap_vs_retrained": 0.0
+    },
+    "2": {
+      "status": "complete",
+      "root": "/home/lorenzo/Projects/MURFI/runs/frozen-confirmation-20261105-121007/seed2-class0",
+      "test_result": "/home/lorenzo/Projects/MURFI/runs/frozen-confirmation-20261105-121007/seed2-class0/frozen-search/frozen-test-results.json",
+      "unlearned": {
+        "bits": 6,
+        "forget_accuracy": 0.06499999761581421,
+        "retain_accuracy": 0.9215555191040039,
+        "forget_gain": 0.06499999761581421,
+        "retain_drop": 0.02522224187850952,
+        "fpr": 0.001,
+        "fpr_rise": 0.001,
+        "passes_screen": false,
+        "correct_forget": 65,
+        "forget_count": 1000,
+        "search_diagnostics": {
+          "algorithm": "beam",
+          "stop_reason": "time_limit",
+          "depth_reached": 6,
+          "selected_bits": 6,
+          "elapsed_seconds": 180.08965193999938,
+          "candidate_evals": 1156,
+          "screen_evals": 1113,
+          "full_validations": 92,
+          "search_incomplete": true
+        }
+      },
+      "retrained": {
+        "bits": 0,
+        "forget_accuracy": 0.0,
+        "retain_accuracy": 0.9428889155387878,
+        "forget_gain": 0.0,
+        "retain_drop": 0.0,
+        "fpr": 0.0,
+        "fpr_rise": 0.0,
+        "passes_screen": false,
+        "correct_forget": 0,
+        "forget_count": 1000,
+        "search_diagnostics": {
+          "algorithm": "beam",
+          "stop_reason": "full_validation_limit",
+          "depth_reached": 6,
+          "selected_bits": 0,
+          "elapsed_seconds": 168.00946931,
+          "candidate_evals": 1216,
+          "screen_evals": 731,
+          "full_validations": 96,
+          "search_incomplete": true
+        }
+      },
+      "random": {
+        "trials": 20,
+        "valid_trials": 20,
+        "forget_max": 0.0
+      },
+      "recovery_gap_vs_retrained": 0.06499999761581421
+    }
+  },
+  "completed_count": 3,
+  "test_screen_passes": 1,
+  "aggregate": {
+    "forget_accuracy": {
+      "mean": 0.13566666841506958,
+      "min": 0.0,
+      "max": 0.34200000762939453,
+      "sample_sd": 0.18162140588601947
+    },
+    "retain_accuracy": {
+      "mean": 0.9342592358589172,
+      "min": 0.9215555191040039,
+      "max": 0.948888897895813,
+      "sample_sd": 0.013768091660285474
+    },
+    "forget_gain": {
+      "mean": 0.13566666841506958,
+      "min": 0.0,
+      "max": 0.34200000762939453,
+      "sample_sd": 0.18162140588601947
+    },
+    "retain_drop": {
+      "mean": 0.012851893901824951,
+      "min": 0.0,
+      "max": 0.02522224187850952,
+      "sample_sd": 0.012618014352623963
+    },
+    "fpr_rise": {
+      "mean": 0.0031851851851851854,
+      "min": 0.0,
+      "max": 0.008555555555555556,
+      "sample_sd": 0.004677676606630047
+    }
+  },
+  "note": "Shared CIFAR-10 dataset/test set; seed 0 is exploratory confirmation after configuration selection. Seeds 1 and 2 receive no outcome-based tuning."
+}

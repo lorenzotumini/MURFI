@@ -7,7 +7,7 @@ import tempfile
 import unittest
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-from pilot import select_beam
+from targeted_flips_gpu import select_beam
 
 
 def node(bits, recall, loss, retain=0.95):
@@ -32,7 +32,7 @@ class BeamSearchTests(unittest.TestCase):
 
     def test_beam_smoke_audits_mutations_without_test_evaluation(self):
         with tempfile.TemporaryDirectory() as directory:
-            subprocess.run([sys.executable, str(Path(__file__).resolve().parents[1] / 'pilot.py'),
+            subprocess.run([sys.executable, str(Path(__file__).resolve().parents[1] / 'targeted_flips_gpu.py'),
                             '--stage', 'smoke', '--device', 'cpu', '--root', directory,
                             '--algorithm', 'beam', '--validation-only'],
                            check=True, capture_output=True, text=True, timeout=60)
@@ -54,7 +54,7 @@ class FasterSearchTests(unittest.TestCase):
     def test_bit_scores_match_enumerated_storage_flips(self):
         import math
         import torch
-        from pilot import bit_change_scores, flipped_float
+        from targeted_flips_gpu import bit_change_scores, flipped_float
         weights = torch.tensor([0.0, 1.0, -1.0, 0.125, -0.02], dtype=torch.float32)
         gradients = torch.tensor([1.0, -2.0, 3.0, 0.0, -0.4])
         before = weights.clone()
@@ -71,7 +71,7 @@ class FasterSearchTests(unittest.TestCase):
 
     def test_cached_batches_preserve_samples_order_and_values(self):
         import torch
-        from pilot import cached_batches
+        from targeted_flips_gpu import cached_batches
         data = [(torch.arange(6).reshape(2, 3), torch.tensor([1, 2])),
                 (torch.ones(1, 3), torch.tensor([3]))]
         cached = cached_batches(data, 'cpu')
@@ -82,7 +82,7 @@ class FasterSearchTests(unittest.TestCase):
 
     def test_bounded_screened_search_never_exceeds_candidate_budget(self):
         with tempfile.TemporaryDirectory() as directory:
-            subprocess.run([sys.executable, str(Path(__file__).resolve().parents[1] / 'pilot.py'),
+            subprocess.run([sys.executable, str(Path(__file__).resolve().parents[1] / 'targeted_flips_gpu.py'),
                             '--stage', 'smoke', '--device', 'cpu', '--root', directory,
                             '--algorithm', 'beam', '--validation-only', '--cache-eval',
                             '--ranking', 'bit-change', '--screen-per-class', '1',
@@ -105,7 +105,7 @@ class FasterSearchTests(unittest.TestCase):
 class FrozenEvaluationTests(unittest.TestCase):
     def test_evaluation_reuses_exact_selected_states_and_refuses_second_look(self):
         import hashlib
-        script = str(Path(__file__).resolve().parents[1] / 'pilot.py')
+        script = str(Path(__file__).resolve().parents[1] / 'targeted_flips_gpu.py')
         with tempfile.TemporaryDirectory() as directory:
             subprocess.run([sys.executable, script, '--stage', 'smoke', '--device', 'cpu',
                             '--root', directory, '--validation-only'],

@@ -1,4 +1,7 @@
-"""Benign CIFAR-10 class-unlearning robustness pilot. See README.md.
+"""Targeted FP32 bit-flip search on CIFAR-10 / ResNet-18, intended for a GPU.
+
+See docs/targeted-flips-gpu.md. CPU execution supports smoke checks and slower
+runs. Matched random controls use the same filtered fault model as the search.
 
 Only modifies owned model tensors in software; no physical fault injection.
 """

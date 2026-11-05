@@ -5,7 +5,7 @@ import sys
 import unittest
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-from pilot import flipped_float, word
+from targeted_flips_gpu import flipped_float, word
 
 
 class BitRepresentationTests(unittest.TestCase):

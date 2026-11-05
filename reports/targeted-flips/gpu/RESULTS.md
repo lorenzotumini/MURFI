@@ -1,13 +1,19 @@
-# CIFAR-10 / ResNet-18: targeted bit-flip recovery
+# Targeted flips: GPU / CIFAR-10 results
 
-Recorded: **2026-11-05, 12:14 Europe/Rome**. This is a snapshot, not a final
-multi-seed result. Seed 0 has completed frozen test evaluation; seeds 1 and 2
-are training under a recorded protocol. Earlier digits findings are in the
-[laptop report](../laptop/CPU_RESULTS.md).
+Experiment date: **2026-11-05**. All three seeds completed frozen
+test evaluation under the recorded protocol. Only the exploratory seed 0
+passes the predefined screen; neither independent replication passes. Earlier digits findings are in the
+[CPU targeted-flip report](../cpu/RESULTS.md).
 
 ## Main findings
 
-- **Five targeted FP32 storage-bit flips restored airplane recognition from
+- **Substantial selective recovery did not replicate under the frozen search
+  budgets.** Seed 0 passed, seed 1 selected zero flips and had 0.0% test recall,
+  and seed 2 reached 6.5% recall with six flips but lost 2.52 points of retained
+  accuracy. This is one pass out of three runs, **zero passes out of the two
+  independent replications**. All unlearned searches reached a resource cap;
+  the negative outcomes do not prove irreversible forgetting.
+- **In seed 0, five targeted FP32 storage-bit flips restored airplane recognition from
   0.0% to 34.2% on the official test split**, with the classifier head excluded.
 - Retained-class accuracy fell from **94.57% to 93.23%** (1.33 percentage
   points). The airplane false-positive rate rose from **0.00% to 0.86%**.
@@ -64,8 +70,8 @@ was 35.4%; the frozen test value is 34.2%.
 The official test set had already been examined for the initial baseline
 experiment. Consequently this is **frozen confirmation on a previously viewed
 test set**, not evaluation on a newly untouched dataset. Seed 0 also supplied
-the exploratory configuration choice. No cross-seed reliability claim follows
-from this one completed seed.
+the exploratory configuration choice. Neither independent replication meets the recovery/preservation criteria;
+cross-seed reliability is not established.
 
 ## Exploratory configuration history
 
@@ -98,11 +104,6 @@ control used 832 candidate objectives and 94 full validations in 107.5 seconds,
 reaching depth four before finding no acceptable extensions. Matching caps do
 not imply equal search difficulty or exhaustive coverage.
 
-Caching evaluation tensors and screening a small discovery subset made the
-bounded comparisons practical: the smaller two-configuration campaign took
-about two minutes overall; the wider campaign took about five. This is not an
-isolated caching speedup measurement, since search settings also changed.
-
 ## What these results do and do not establish
 
 The evidence supports **behavioral recovery through a few targeted software
@@ -124,20 +125,62 @@ retained utility in an MU benchmark is a different quantity from our post-fault
 forgotten-class recall. No LLM unlearning or physical GPU fault injection was
 tested. All changes were software XORs at ideal arbitrary weight addresses.
 
-## Frozen replication and outstanding work
+## Completed frozen replication
 
-Seeds **1 and 2** are in progress with unchanged training/search settings and
-no outcome-based tuning. They select flips using validation only and then run
-one frozen test evaluation. The protocol retains failed training/unlearning
-gates rather than dropping or replacing seeds. Searches hitting caps are
-reported as incomplete. Each seed also receives its own retrained control and
-20 random trials. Seeds change initialization, split and RNG, but share the
-same dataset and official test images; these are not independent datasets.
+| Seed | Role | Selected flips | Test airplane accuracy | Retained accuracy | Retained loss (points) | Airplane false positives | Test screen |
+|---|---|---:|---:|---:|---:|---:|---|
+| 0 | Exploratory configuration seed; frozen confirmation | 5 | 34.20% | 93.23% | 1.33 | 0.86% | Pass |
+| 1 | Independent frozen replication | 0 | 0.00% | 94.89% | 0.00 | 0.00% | Fail: no recovery |
+| 2 | Independent frozen replication | 6 | 6.50% | 92.16% | 2.52 | 0.10% | Fail: insufficient recovery and excess utility loss |
 
-Pending: seed-1/2 outcomes and across-seed variation; other forgotten classes;
-stronger published MU baselines; comparisons with ordinary supervised repair;
-and physically constrained fault models. No result from a pending seed is
-included in the headline finding.
+All three completed the training/unlearning gates; no seed was discarded or
+retuned. Retrained controls selected zero flips and had 0.0% test airplane
+recall in every seed. Their retained test accuracies were 94.53%, 94.77% and
+94.29%, respectively.
+
+Seed 1 explored six accepted depths without increasing validation airplane
+recall, so validation selection retained the unchanged zero-bit checkpoint.
+Seed 2 selected six flips at its time limit. It reached 5.4% validation airplane
+recall and 93.49% retained accuracy, meeting the validation preservation limits,
+but its test retained loss exceeded two points. Thus preservation on selection
+data did not guarantee preservation on test. Its six edits also toggle
+exponent bit 26 and multiply weights by 256, all in layer4 matrices.
+
+| Seed | Unlearned search: candidate objectives / full validations | Stop | Retrained search: candidate objectives / full validations | Stop |
+|---|---|---|---|---|
+| 0 | 1,088 / 96 | Full-validation cap | 832 / 94 | No acceptable extension |
+| 1 | 1,280 / 63 | Candidate-evaluation cap | 1,216 / 96 | Full-validation cap |
+| 2 | 1,156 / 92 | Time cap | 1,216 / 96 | Full-validation cap |
+
+All unlearned searches are resource-capped and marked incomplete. Matching
+maximum budgets did not yield identical work; GPU assignments differ and a
+wall-time cap also applies. These are negative results for this heuristic and
+budget, not exhaustive statements about remaining recoverable information.
+
+Each seed has 20 random trials with its selected targeted count. No trial
+recovered airplane recognition. Seed 0's trials have five flips and seed 2's
+have six. Seed 1's trials have **zero flips**, reproduce the baseline, and are
+**not informative nonzero-fault controls**. Do not treat all 60 trials as
+nonzero random-fault experiments or combine them with the unfiltered digits
+campaign.
+
+The descriptive mean test airplane recall is 13.57% across the three runs;
+the median is 6.5%. This includes the exploratory configuration seed and is
+not an unbiased estimate of generalization. The independent replications are
+0.0% and 6.5%, with neither passing the predefined screen. The headline must
+therefore remain **a seed-dependent vulnerability, not reliable multi-seed
+unlearning reversal**.
+
+All selections used validation only, followed by one frozen test evaluation.
+The same dataset and official test images are shared; seeds vary initialization,
+split and RNG rather than supplying independent datasets. No outcomes caused
+hyperparameter changes or replacement seeds. The earlier test exposure and
+supervised search limitations described above still apply.
+
+Outstanding: other forgotten classes; stronger published MU baselines;
+comparisons with ordinary supervised repair; and physically constrained fault
+models. Further experiments should be recorded as a new exploratory protocol,
+not a continuation that changes this frozen replication's outcome.
 
 ## Saved evidence
 
@@ -146,10 +189,13 @@ included in the headline finding.
 - [Test manifest and checkpoint/evaluator hashes](seed0-frozen-test-manifest.json).
 - [Exploratory search ledger, including stopped and unstarted runs](search-ledger.json).
 - [Frozen replication protocol](frozen-protocol.json) and [file checksum](frozen-protocol.json.sha256).
-- [Replication status snapshot](confirmation-status-snapshot.json), current at recording time.
+- [Historical seed-0 status snapshot](confirmation-status-snapshot.json), retained unchanged.
+- [Seed-1 frozen test](seed1-frozen-test.json), [validation selection](seed1-selection-results.json),
+  [test manifest](seed1-frozen-test-manifest.json), and [search trajectory](seed1-unlearned-search.json).
+- [Seed-2 frozen test](seed2-frozen-test.json), [validation selection](seed2-selection-results.json),
+  [test manifest](seed2-frozen-test-manifest.json), and [search trajectory](seed2-unlearned-search.json).
+- [Final three-seed replication summary](replication-summary.json).
 
-Live replication outputs are in `runs/frozen-confirmation-20261105-121007/`;
-seed-0 checkpoints remain in `runs/resnet18-seed0-class0-20261105-021912/`.
-These local run directories are git-ignored. The compact JSON evidence above
-is copied into `reports/resnet/` for durable review; checkpoint weights remain
-local. Update this snapshot after the pending seeds complete.
+The archived evidence includes metrics, configurations, fault traces, and
+checkpoint hashes. The checkpoint weights themselves are not distributed in
+this repository.

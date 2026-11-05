@@ -1,6 +1,7 @@
-# Exploratory laptop experiment: results
+# Targeted flips: CPU / digits results
 
-Run on 2026-11-04 using existing laptop NumPy/scikit-learn. No PyTorch installation or GPU was needed.
+Experiment date: **2026-11-04**. Models were trained and evaluated with NumPy
+and scikit-learn on the digits dataset.
 
 These are real held-out toy-dataset results, not synthetic smoke outputs. They are exploratory evidence for continuing the study, not confirmation of physical fault injection or robust unlearning reversal.
 
@@ -13,7 +14,7 @@ Both conditions used digits 0, 1, and 2; seeds 0, 1, and 2; a 32-bit maximum sea
 | All weight matrices | 0.9% | 94.1% | 96.7% | 96.2% | 32.3% | 4–8 | 7/9 |
 | Output head excluded | 0.9% | 89.1% | 96.7% | 95.4% | 0.3% | 14–32 | 6/9 |
 
-The screening criterion is forgotten accuracy improving by at least 20 percentage points, retained macro accuracy declining by at most 2 points, and forgotten-label false-positive rate rising by at most 1 point. It was inherited from the CIFAR pilot protocol. Validation constraints did not always generalize to test data; the failed cases above are included.
+The screening criterion is forgotten accuracy improving by at least 20 percentage points, retained macro accuracy declining by at most 2 points, and forgotten-label false-positive rate rising by at most 1 point. It was inherited from the CIFAR targeted-flip protocol. Validation constraints did not always generalize to test data; the failed cases above are included.
 
 ## What this suggests
 
@@ -51,4 +52,4 @@ Next, reproduce a published CIFAR-10 unlearning checkpoint trio under its docume
 | No head | 2 | 1 | 22 | 0.0% → 97.1% | -3.71 | +0.00 | 0.0% | Fail |
 | No head | 2 | 2 | 19 | 0.0% → 82.9% | -2.16 | +0.00 | 0.0% | Fail |
 
-All configurations, split indices, per-run confusion matrices, validation trajectories, and bit traces are in `digits-main.json.gz` and `digits-no-head.json.gz` (gzip-compressed JSON). Source: `cpu_digits.py`; execution details: `LAPTOP_EXPERIMENT.md`.
+All configurations, split indices, per-run confusion matrices, validation trajectories, and bit traces are in `digits-main.json.gz` and `digits-no-head.json.gz` (gzip-compressed JSON). Source: `targeted_flips_cpu.py`; execution details: [CPU guide](../../../docs/targeted-flips-cpu.md).

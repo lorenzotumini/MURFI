@@ -1,6 +1,7 @@
 # Unfiltered random-fault campaign: exploratory CPU results
 
-Run on 2026-11-04. No GPU, new dependency installation, or physical fault injection was used.
+Experiment date: **2026-11-04**. The campaign used software-injected FP32
+parameter faults on the digits models.
 
 The campaign reconstructed all nine original/unlearned/retrained model trios from the earlier digits study and verified their baseline metrics. It used uniformly selected FP32 parameter-storage bits, including biases, with no magnitude or finite-value filtering. Each trial starts from a clean checkpoint.
 
@@ -50,10 +51,10 @@ The models remain small classifiers trained with a simple random-incorrect-label
 
 - All 108,000 logged fault trials and 324,000 model evaluations were checked against summary counters.
 - 663 independently reconstructed faulted models reproduced their logged metrics, including numerical-failure and small-gain cases.
-- Four unit tests passed, covering full parameter/bias bit mapping, retention of nonfinite faults, outcome classification, and the zero-event confidence calculation.
 - Bitwise audits confirmed that each campaign restored the exact clean checkpoint.
 - `protocol.json` fixes thresholds, sampling, and source/reference hashes; `summary.json` contains detailed counts, field breakdowns, and examples.
 - `trials.jsonl.gz` contains all raw trials. The nine NPZ files preserve the exact original/unlearned/retrained checkpoints.
 - `verification.json` records validation counts.
 
-Total campaign execution time, including fixture reconstruction: 126.5 seconds. See the repository-root `RANDOM_FAULTS.md` for the full method and Linux commands.
+See the [random-flip guide](../../docs/random-flips.md) for the full method and
+execution commands.

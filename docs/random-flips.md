@@ -1,6 +1,11 @@
-# Random parameter-storage fault experiment
+# Random flips: unfiltered storage faults
 
-This is separate from the targeted search and from physical hardware testing.
+`random_flips.py` runs the unfiltered CPU/digits campaign. Run all commands
+from the repository root.
+
+[Experiment chooser](../README.md) · [Recorded results](../reports/random-flips/RESULTS.md)
+
+This is separate from targeted search and its filtered random controls.
 It asks: conditional on an uncorrected random bit error reaching a stored
 model parameter, how often does forgotten-digit recognition increase while
 the remaining predictions stay useful?
@@ -34,7 +39,7 @@ parameters rather than other memory. See
 The original, relabeling-suppressed, and never-trained-on-the-forgotten-digit
 models are reconstructed for digits 0, 1, 2 and seeds 0, 1, 2. Reconstruction
 must reproduce the saved baseline test metrics exactly; otherwise execution
-stops. The source reference is `reports/laptop/digits-main.json.gz`.
+stops. The source reference is `reports/targeted-flips/cpu/digits-main.json.gz`.
 
 The same sampled logical bit positions are applied to each member of a trio,
 making the model comparisons paired. Stored values and hence flip directions
@@ -92,12 +97,12 @@ location/direction distribution, mitigation coverage, and exposure duration.
 
 ## Running on Linux
 
-Use the same CPU dependencies as `cpu_digits.py`; SciPy is already a dependency
-of scikit-learn. No PyTorch, GPU, or dataset download is needed.
+Install the CPU dependencies listed in `requirements-cpu.txt`. No PyTorch,
+GPU, or dataset download is needed.
 
 ```bash
 python -m pip install -r requirements-cpu.txt
-python random_faults.py --output-dir runs/random-faults
+python random_flips.py --output-dir runs/random-flips
 ```
 
 The script refuses to overwrite an existing output directory. It saves the
@@ -105,6 +110,3 @@ protocol and source/reference hashes before testing, exact NPZ fixtures,
 compressed per-trial logs, and a summary. If a different platform or library
 version does not reproduce the saved fixtures, investigate that difference
 before running a supposedly matched campaign.
-
-The first execution was validated on the laptop CPU. Linux execution has not
-yet been verified. No new laptop dependency environment was installed.

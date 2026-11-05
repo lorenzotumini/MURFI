@@ -1,17 +1,19 @@
-# Running the lightweight CPU experiment
+# Targeted flips: CPU / digits
 
-`cpu_digits.py` is separate from `pilot.py`. It trains a small FP32
+`targeted_flips_cpu.py` trains a small FP32
 64-input / 64-hidden-unit ReLU / 10-output network on scikit-learn's packaged
 8x8 handwritten digits. It needs NumPy, scikit-learn, and their normal
 dependency threadpoolctl. It needs neither PyTorch nor dataset downloads.
-The laptop already had these dependencies; no environment was installed.
+Run all commands from the repository root.
 
-On a new Linux machine, install them in the environment you intend to use:
+[Experiment chooser](../README.md) · [Recorded results](../reports/targeted-flips/cpu/RESULTS.md)
+
+Install the CPU dependencies, then run the two targeted conditions:
 
 ```bash
-python -m pip install numpy scikit-learn
-python cpu_digits.py --seeds 0 1 2 --classes 0 1 2 --random-trials 100 --output runs/digits-main.json
-python cpu_digits.py --seeds 0 1 2 --classes 0 1 2 --random-trials 100 --exclude-head --output runs/digits-no-head.json
+python -m pip install -r requirements-cpu.txt
+python targeted_flips_cpu.py --seeds 0 1 2 --classes 0 1 2 --random-trials 100 --output runs/digits-main.json
+python targeted_flips_cpu.py --seeds 0 1 2 --classes 0 1 2 --random-trials 100 --exclude-head --output runs/digits-no-head.json
 ```
 
 The script checks its analytic gradients against finite differences before
@@ -38,7 +40,7 @@ This is a simple RL-style toy baseline, not a reproduction of SalUn.
 The search uses labeled discovery images, gradients, and actual candidate
 evaluation. It changes only FP32 matrix bits, without optimizer steps. All bit
 positions are eligible, subject to finite weights and the same 16-times-layer-
-maximum bound used by the larger pilot. It tests a shortlist of candidates
+maximum bound used by the GPU targeted experiment. It tests a shortlist of candidates
 and accepts up to 32 flips. It selects the validation checkpoint with highest
 forgotten accuracy subject to a two-point retain-accuracy loss limit and a
 one-point false-positive-rate increase limit. The head-exclusion condition
