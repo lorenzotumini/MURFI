@@ -73,6 +73,13 @@ directory. See the [random-flip guide](docs/random-flips.md) for the protocol an
 
 ## Reading and checking the work
 
+A separate [representation-comparison experiment](docs/representation-analysis.md)
+compares the original, suppressed, and retrained models through shared input
+activations, CKA, nearest-neighbor overlap, and PCA. It runs now on a laptop
+using the archived digits checkpoints and can later export ResNet features on
+a GPU desktop for the same CPU analysis. See the
+[initial laptop pilot](reports/representations/RESULTS.md).
+
 - [Cross-experiment findings and limitations](FINDINGS.md).
 - [Candidate external checkpoints](docs/checkpoint-candidates.md).
 

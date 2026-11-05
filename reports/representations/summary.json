@@ -1,0 +1,329 @@
+[
+  {
+    "seed": 0,
+    "forget_comparisons": [
+      {
+        "partition": "heldout",
+        "group": "forget",
+        "layer": "hidden",
+        "pair": "original--unlearned",
+        "n": 18,
+        "cka": 0.9660023216426932,
+        "cka_debiased": 0.9511684341378637,
+        "cka_permuted_mean": 0.2902937356760887,
+        "prediction_disagreement": 1.0,
+        "prediction_js_nats": 0.661306619644165,
+        "knn_5": 0.8222222222222223,
+        "knn_5_valid_anchors": 18,
+        "knn_10": 0.9166666666666666,
+        "knn_10_valid_anchors": 18,
+        "knn_25": 0.8755555555555558,
+        "knn_25_valid_anchors": 18
+      },
+      {
+        "partition": "heldout",
+        "group": "forget",
+        "layer": "hidden",
+        "pair": "original--retrained",
+        "n": 18,
+        "cka": 0.9789630762330568,
+        "cka_debiased": 0.9708241409473206,
+        "cka_permuted_mean": 0.26340360021020864,
+        "prediction_disagreement": 1.0,
+        "prediction_js_nats": 0.6924243569374084,
+        "knn_5": 0.8999999999999999,
+        "knn_5_valid_anchors": 18,
+        "knn_10": 0.9277777777777779,
+        "knn_10_valid_anchors": 18,
+        "knn_25": 0.8977777777777778,
+        "knn_25_valid_anchors": 18
+      },
+      {
+        "partition": "heldout",
+        "group": "forget",
+        "layer": "hidden",
+        "pair": "unlearned--retrained",
+        "n": 18,
+        "cka": 0.9429789422569107,
+        "cka_debiased": 0.922283928043067,
+        "cka_permuted_mean": 0.27846917957012984,
+        "prediction_disagreement": 0.7222222222222222,
+        "prediction_js_nats": 0.3142380118370056,
+        "knn_5": 0.7666666666666667,
+        "knn_5_valid_anchors": 18,
+        "knn_10": 0.8777777777777778,
+        "knn_10_valid_anchors": 18,
+        "knn_25": 0.8533333333333334,
+        "knn_25_valid_anchors": 18
+      }
+    ],
+    "heldout_behavior": [
+      {
+        "partition": "heldout",
+        "group": "forget",
+        "model": "original",
+        "n": 18,
+        "accuracy": 1.0,
+        "nll": 0.00019132456509396434
+      },
+      {
+        "partition": "heldout",
+        "group": "retain",
+        "model": "original",
+        "n": 162,
+        "accuracy": 0.9691358024691358,
+        "nll": 0.08923079818487167
+      },
+      {
+        "partition": "heldout",
+        "group": "forget",
+        "model": "unlearned",
+        "n": 18,
+        "accuracy": 0.0,
+        "nll": 5.587061882019043
+      },
+      {
+        "partition": "heldout",
+        "group": "retain",
+        "model": "unlearned",
+        "n": 162,
+        "accuracy": 0.9691358024691358,
+        "nll": 0.09149786829948425
+      },
+      {
+        "partition": "heldout",
+        "group": "forget",
+        "model": "retrained",
+        "n": 18,
+        "accuracy": 0.0,
+        "nll": 13.27199935913086
+      },
+      {
+        "partition": "heldout",
+        "group": "retain",
+        "model": "retrained",
+        "n": 162,
+        "accuracy": 0.9691358024691358,
+        "nll": 0.0899355337023735
+      }
+    ]
+  },
+  {
+    "seed": 1,
+    "forget_comparisons": [
+      {
+        "partition": "heldout",
+        "group": "forget",
+        "layer": "hidden",
+        "pair": "original--unlearned",
+        "n": 17,
+        "cka": 0.94894257503836,
+        "cka_debiased": 0.9301773772515571,
+        "cka_permuted_mean": 0.2682283596047729,
+        "prediction_disagreement": 1.0,
+        "prediction_js_nats": 0.6761014461517334,
+        "knn_5": 0.8117647058823529,
+        "knn_5_valid_anchors": 17,
+        "knn_10": 0.8941176470588236,
+        "knn_10_valid_anchors": 17,
+        "knn_25": 0.88,
+        "knn_25_valid_anchors": 17
+      },
+      {
+        "partition": "heldout",
+        "group": "forget",
+        "layer": "hidden",
+        "pair": "original--retrained",
+        "n": 17,
+        "cka": 0.9825148471985273,
+        "cka_debiased": 0.9792943025940759,
+        "cka_permuted_mean": 0.26124472254584324,
+        "prediction_disagreement": 1.0,
+        "prediction_js_nats": 0.6741517186164856,
+        "knn_5": 0.8235294117647058,
+        "knn_5_valid_anchors": 17,
+        "knn_10": 0.8588235294117648,
+        "knn_10_valid_anchors": 17,
+        "knn_25": 0.8305882352941177,
+        "knn_25_valid_anchors": 17
+      },
+      {
+        "partition": "heldout",
+        "group": "forget",
+        "layer": "hidden",
+        "pair": "unlearned--retrained",
+        "n": 17,
+        "cka": 0.9240497950214266,
+        "cka_debiased": 0.9013621651023846,
+        "cka_permuted_mean": 0.2643359025534323,
+        "prediction_disagreement": 0.8235294117647058,
+        "prediction_js_nats": 0.41082459688186646,
+        "knn_5": 0.7882352941176471,
+        "knn_5_valid_anchors": 17,
+        "knn_10": 0.8058823529411764,
+        "knn_10_valid_anchors": 17,
+        "knn_25": 0.7694117647058825,
+        "knn_25_valid_anchors": 17
+      }
+    ],
+    "heldout_behavior": [
+      {
+        "partition": "heldout",
+        "group": "forget",
+        "model": "original",
+        "n": 17,
+        "accuracy": 1.0,
+        "nll": 0.011689350008964539
+      },
+      {
+        "partition": "heldout",
+        "group": "retain",
+        "model": "original",
+        "n": 163,
+        "accuracy": 0.9754601226993865,
+        "nll": 0.07954911142587662
+      },
+      {
+        "partition": "heldout",
+        "group": "forget",
+        "model": "unlearned",
+        "n": 17,
+        "accuracy": 0.0,
+        "nll": 8.311332702636719
+      },
+      {
+        "partition": "heldout",
+        "group": "retain",
+        "model": "unlearned",
+        "n": 163,
+        "accuracy": 0.9693251533742331,
+        "nll": 0.11238846927881241
+      },
+      {
+        "partition": "heldout",
+        "group": "forget",
+        "model": "retrained",
+        "n": 17,
+        "accuracy": 0.0,
+        "nll": 12.118523597717285
+      },
+      {
+        "partition": "heldout",
+        "group": "retain",
+        "model": "retrained",
+        "n": 163,
+        "accuracy": 0.9815950920245399,
+        "nll": 0.08290621638298035
+      }
+    ]
+  },
+  {
+    "seed": 2,
+    "forget_comparisons": [
+      {
+        "partition": "heldout",
+        "group": "forget",
+        "layer": "hidden",
+        "pair": "original--unlearned",
+        "n": 18,
+        "cka": 0.9668728354834861,
+        "cka_debiased": 0.9508410992377868,
+        "cka_permuted_mean": 0.22216643836860261,
+        "prediction_disagreement": 0.9444444444444444,
+        "prediction_js_nats": 0.632373571395874,
+        "knn_5": 0.8999999999999999,
+        "knn_5_valid_anchors": 18,
+        "knn_10": 0.8944444444444444,
+        "knn_10_valid_anchors": 18,
+        "knn_25": 0.8200000000000001,
+        "knn_25_valid_anchors": 18
+      },
+      {
+        "partition": "heldout",
+        "group": "forget",
+        "layer": "hidden",
+        "pair": "original--retrained",
+        "n": 18,
+        "cka": 0.9678994641324516,
+        "cka_debiased": 0.9509952580866743,
+        "cka_permuted_mean": 0.2865445622453424,
+        "prediction_disagreement": 0.9444444444444444,
+        "prediction_js_nats": 0.6284969449043274,
+        "knn_5": 0.8777777777777778,
+        "knn_5_valid_anchors": 18,
+        "knn_10": 0.8888888888888888,
+        "knn_10_valid_anchors": 18,
+        "knn_25": 0.8266666666666667,
+        "knn_25_valid_anchors": 18
+      },
+      {
+        "partition": "heldout",
+        "group": "forget",
+        "layer": "hidden",
+        "pair": "unlearned--retrained",
+        "n": 18,
+        "cka": 0.9675123555082521,
+        "cka_debiased": 0.9578657649383475,
+        "cka_permuted_mean": 0.30592122432202934,
+        "prediction_disagreement": 0.6111111111111112,
+        "prediction_js_nats": 0.22506636381149292,
+        "knn_5": 0.8666666666666667,
+        "knn_5_valid_anchors": 18,
+        "knn_10": 0.8777777777777778,
+        "knn_10_valid_anchors": 18,
+        "knn_25": 0.8000000000000002,
+        "knn_25_valid_anchors": 18
+      }
+    ],
+    "heldout_behavior": [
+      {
+        "partition": "heldout",
+        "group": "forget",
+        "model": "original",
+        "n": 18,
+        "accuracy": 0.9444444444444444,
+        "nll": 0.18113982677459717
+      },
+      {
+        "partition": "heldout",
+        "group": "retain",
+        "model": "original",
+        "n": 162,
+        "accuracy": 0.9691358024691358,
+        "nll": 0.13102926313877106
+      },
+      {
+        "partition": "heldout",
+        "group": "forget",
+        "model": "unlearned",
+        "n": 18,
+        "accuracy": 0.0,
+        "nll": 9.004775047302246
+      },
+      {
+        "partition": "heldout",
+        "group": "retain",
+        "model": "unlearned",
+        "n": 162,
+        "accuracy": 0.9506172839506173,
+        "nll": 0.15661370754241943
+      },
+      {
+        "partition": "heldout",
+        "group": "forget",
+        "model": "retrained",
+        "n": 18,
+        "accuracy": 0.0,
+        "nll": 10.023811340332031
+      },
+      {
+        "partition": "heldout",
+        "group": "retain",
+        "model": "retrained",
+        "n": 162,
+        "accuracy": 0.9691358024691358,
+        "nll": 0.12433182448148727
+      }
+    ]
+  }
+]
