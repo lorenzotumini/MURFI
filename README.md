@@ -1,4 +1,4 @@
-# Unlearning fault-simulation pilot
+# Machine Unlearning Reversal via Fault Injection
 
 Sintesi dei risultati e dei limiti sperimentali, in italiano: [FINDINGS.md](FINDINGS.md).
 
