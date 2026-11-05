@@ -1,0 +1,6 @@
+[tool.ruff]
+line-length = 95
+extend-exclude = ["runs", "data", "reports"]
+
+[tool.ruff.format]
+quote-style = "single"

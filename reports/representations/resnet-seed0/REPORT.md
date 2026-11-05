@@ -1,6 +1,10 @@
 # Representation comparison
 
-Source: **repository_resnet18_cifar10**; seed: **0**; forget class: **0**. incorrect-label suppression baseline.
+Source: **repository_resnet18_cifar10**; seed: **0**; forget class: **0**.
+
+Method: incorrect-label suppression baseline.
+
+[Metric definitions and limitations](../../../docs/representation-analysis.md).
 
 - Existing search/selection splits have been used previously; this is exploratory.
 - Extra retrained checkpoints must be independently trained on the same retained data.
@@ -18,9 +22,8 @@ Source: **repository_resnet18_cifar10**; seed: **0**; forget class: **0**. incor
 
 ## Representation metrics
 
-These metrics use unreduced activations before any fitted alignment. Higher values mean
-more similar geometry or neighborhoods, not better unlearning. CKA is centered within
-each group; neighbor candidates include all classes in the partition.
+Full-space comparisons, before visualization alignment. Higher similarity
+does not establish better unlearning. Neighbor candidates include all classes.
 
 | Layer | Group | Pair | n | CKA | Debiased CKA | Shuffled CKA | Shared 10-NN | Prediction disagreement |
 |---|---|---|---:|---:|---:|---:|---:|---:|
@@ -53,19 +56,16 @@ each group; neighbor candidates include all classes in the partition.
 
 ## Class relationships
 
-Cosine and PCA views use **layer4**. Each heatmap cell averages similarities between
-images of its row and column classes. Diagonal cells compare distinct images of the same
-class, excluding self-matches. Cosine measures direction, ignoring magnitude. ReLU features
-are nonnegative, so raw cosines cannot be negative. Class means can hide variation.
+Cosine and PCA views use **layer4**. Diagonal cells compare
+distinct images of the same class; self-matches are excluded.
 
 ![Class-average cosine](similarity_by_class.png)
 
 ## Changes and sensitivity to centering
 
-Columns show the model subtraction in their titles. Red means increased cosine similarity;
-blue means decreased similarity. Raw and centered rows share one signed color scale.
-Centering subtracts each model mean on retained calibration examples only. The mean is not
-fitted on these held-out images. No rotation or projection is used for these heatmaps.
+Column titles specify the subtraction order. Red indicates increased cosine;
+blue indicates decreased cosine. All panels share one signed scale.
+Centered coordinates subtract the retained-calibration mean for each model.
 
 ![Raw and centered cosine changes](similarity_change.png)
 
@@ -78,41 +78,23 @@ fitted on these held-out images. No rotation or projection is used for these hea
 | centered | retrained minus original | -0.0002 | 0.0134 | 18 / 36 |
 | centered | retrained minus unlearned | -0.0006 | 0.0214 | 16 / 36 |
 
-Signed means may cancel; centering also constrains aggregate geometry. Disappearance
-of a broad signed increase does not prove that changes were entirely a common offset.
-
 | Model | Mean Euclidean distance between retained classes | Mean retained activation norm |
 |---|---:|---:|
 | original | 7.1192 | 5.9513 |
 | unlearned | 7.2829 | 6.0621 |
 | retrained | 7.0351 | 5.9218 |
 
-Euclidean distances weight image pairs equally and are sensitive to scale. Pair counts
-are not independent statistical samples; these comparisons are descriptive.
-
 ## PCA overview
 
 ![Shared aligned PCA](pca.png)
 
-Two axes explain **30.7%** of calibration variance. Rotations/reflections and PCA
-are fitted on retained calibration examples only. A similar 2D position is not full-space equivalence.
+Two axes explain **30.7%** of calibration variance.
+Alignment and PCA use retained calibration examples only. A similar 2D
+position does not establish full-space equivalence.
 
-- Orthogonal maps and common PCA fitted only on retained calibration rows.
-- No labels are used to fit PCA or rotations; labels color the display.
-- A 2D projection can hide changes; numerical metrics use full feature spaces.
+## Numerical evidence
 
-## Limits and numerical evidence
-
-- CKA uses separately centered groups; kNN uses all classes in each partition.
-- Permutation means diagnose finite-sample bias; they are not p-values.
-- No confidence interval or equivalence claim from a single model trio.
-- Debiased CKA uses unbiased HSIC; its ratio is not an unbiased estimator.
-- Cosine ties use input row order; inspect neighbor_quality for degeneracy.
-
-A retrained model may retain a coherent forget-class representation through shared features.
-High similarity alone cannot demonstrate residual training-data influence. Compare against
-independent retraining on fixed retained data before claiming equivalence or removal.
-
-All results and provenance are in [metrics.json](metrics.json). Detailed tables:
-[comparisons](comparisons.csv), [behavior](behavior.csv), [class relations](relations.csv).
-[Plot diagnostics](plot_diagnostics.json) record calibration rank and alignment residuals.
+[metrics.json](metrics.json) contains all measurements, quality checks and provenance.
+Detailed tables: [comparisons](comparisons.csv), [behavior](behavior.csv),
+[class relations](relations.csv). [Plot diagnostics](plot_diagnostics.json)
+record calibration rank and alignment residuals.

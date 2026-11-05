@@ -1,97 +1,55 @@
-# Laptop representation pilot â€” 2026-11-05
+# Representation analysis: digits and CIFAR-10
 
-The CPU pipeline is implemented and has been run on the three archived
-digit-0 checkpoint trios, seeds 0, 1, and 2. No training, GPU, fault injection,
-or dataset download was needed. The desktop run below extends the analysis to
-actual ResNet-18 checkpoints on CIFAR-10.
+The experiments compare clean original, incorrect-label-suppressed, and
+retained-only retrained models on matched inputs. Digits results cover forgotten
+class 0 and seeds 0–2; CIFAR-10 covers airplane and seed 0. No fault injection or
+additional training is part of this analysis.
 
-## What was compared
+The [method guide](../../docs/representation-analysis.md) defines the metrics,
+calibration procedure, and reproduction commands. Per-run reports contain the
+full tables and figures; this page discusses comparisons across runs.
 
-Each trio contains the original model, the incorrect-label suppression model
-named `unlearned` in the archives, and a retained-only retrained model. We
-extract the 64-dimensional hidden ReLU activation before the classifier.
+## Digits: similar geometry despite different behavior
 
-The analysis uses shared images and keeps three disjoint groups:
+The 64-dimensional hidden ReLU activations are evaluated on the archived
+discovery split: 180 held-out images per seed, including 18, 17, and 18 digit-0
+images. Retained selection examples calibrate alignment/PCA and are excluded
+from metric estimates. Training-record diagnostics use up to 60 examples per
+digit. The test split is not used; prior use of discovery/selection data makes
+the analysis exploratory.
 
-- Up to 60 original training images per digit, for training-record diagnostics.
-- The archived discovery split for held-out comparisons: 180 images per seed,
-  including 18, 17, and 18 digit-0 images respectively.
-- Retained images from the selection split for fitting the visualization's
-  orthogonal alignment and common PCA axes. These do not enter metric estimates.
+Held-out digit-0 representation comparisons:
 
-The archived test split was not used. Discovery and selection data were already
-used in previous experiments, making this an exploratory analysis.
+| Seed | Pair | Debiased CKA | Shared 10-neighbor fraction |
+|---|---|---:|---:|
+| 0 | Original / unlearned | 0.9512 | 0.9167 |
+| 0 | Original / retrained | 0.9708 | 0.9278 |
+| 0 | Unlearned / retrained | 0.9223 | 0.8778 |
+| 1 | Original / unlearned | 0.9302 | 0.8941 |
+| 1 | Original / retrained | 0.9793 | 0.8588 |
+| 1 | Unlearned / retrained | 0.9014 | 0.8059 |
+| 2 | Original / unlearned | 0.9508 | 0.8944 |
+| 2 | Original / retrained | 0.9510 | 0.8889 |
+| 2 | Unlearned / retrained | 0.9579 | 0.8778 |
 
-## Observations
-
-Debiased linear CKA on held-out digit-0 examples:
-
-| Seed | n | Original / unlearned | Original / retrained | Unlearned / retrained |
-|---|---:|---:|---:|---:|
-| 0 | 18 | 0.9512 | 0.9708 | 0.9223 |
-| 1 | 17 | 0.9302 | 0.9793 | 0.9014 |
-| 2 | 18 | 0.9508 | 0.9510 | 0.9579 |
-
-Shared 10-neighbor fractions for held-out digit-0 anchors, with all 180
-held-out images as the candidate pool:
-
-| Seed | Original / unlearned | Original / retrained | Unlearned / retrained |
-|---|---:|---:|---:|
-| 0 | 0.9167 | 0.9278 | 0.8778 |
-| 1 | 0.8941 | 0.8588 | 0.8059 |
-| 2 | 0.8944 | 0.8889 | 0.8778 |
+All three pairs have similar hidden geometry, including original/retrained.
+High original/unlearned similarity therefore cannot by itself identify failed
+unlearning. CKA and neighbor overlap also do not always rank pairs identically.
 
 In seed 0, original digit-0 recall is 100%, while unlearned and retrained recall
-are both 0%. All three have 96.91% retained accuracy on these held-out images.
-Despite equal forget recall, unlearned and retrained predictions disagree on
-72.22% of the forgotten examples: matching one behavioral metric does not imply
-matching the output distribution, either.
+are both 0%. All three have 96.91% retained accuracy. Nevertheless, the latter
+two disagree on 72.22% of forgotten-example predictions. Matching recall does
+not imply matching output distributions.
 
-All three pairs show similar hidden geometry. In particular, the retrained
-model is also close to the original. Therefore, high original/unlearned
-similarity alone cannot identify unsuccessful unlearning. CKA and neighbor
-overlap also do not always rank the pairs identically. The results establish a
-working diagnostic pipeline, not a universal signature of residual knowledge.
+Digit-0 representations remain coherent while their relations to other classes
+change: in seed 0, mean cosine between distinct zero images is 0.9592, 0.9539,
+and 0.9431 for original, suppressed, and retrained models. Mean zero/one cosine
+is 0.5995, 0.7413, and 0.6728. These are descriptive values, not evidence of
+memorization or a causal mechanism.
 
-![Shared PCA view for seed 0](seed0/pca.png)
+### Sensitivity to the feature-space origin
 
-The axes are common across the three panels. Forgotten digit-0 examples are
-marked with crosses. Calibration PCA explains about 49.6% of calibration
-variance in two dimensions for seed 0, so substantial geometry remains unseen.
-Calibration rank is below 64 for these ReLU features; rotations outside the
-calibration span are underdetermined. See each `plot_diagnostics.json`.
-
-## Evidence and reproduction
-
-Each seed now has **one unified report** covering behavior, CKA and neighbors,
-class-average similarities, raw/centered changes, and PCA. The separate digit
-and relations report series have been removed. The raw numerical comparisons
-are exactly preserved after consolidation.
-
-For seed 0, mean similarity between **distinct zero images** is 0.9592 in the
-original, 0.9539 in the suppressed model, and 0.9431 after retraining. Mean
-zero/one similarity changes from 0.5995 to 0.7413 and 0.6728 respectively. Thus
-the zero representations remain coherent while their angular relationships
-with other classes change. These are descriptive values on the same small
-held-out set; they do not establish memorization or a causal mechanism.
-
-- [Seed 0 report](seed0/REPORT.md), [metrics](seed0/metrics.json).
-- [Seed 1 report](seed1/REPORT.md), [metrics](seed1/metrics.json).
-- [Seed 2 report](seed2/REPORT.md), [metrics](seed2/metrics.json).
-- [Compact cross-seed values](summary.json).
-- [Setup, exact commands, metrics, and desktop handoff](../../docs/representation-analysis.md).
-
-Every per-seed folder includes CSV tables, three PNG figures, and provenance
-with source checkpoint/reference hashes. Portable feature bundles are in the
-ignored local `runs/representations/digit0-seed{seed}/features.npz` paths and can
-be regenerated from the archived weights. Git transfers the reports and code
-only after the new files are added through the usual workflow.
-
-## Origin sensitivity
-
-The unified report now computes the centering and Euclidean checks directly,
-replacing the one-off `centering-check.json` calculation. For retained-class
-pairs, mean cosine changes after suppression are:
+Suppression changes retained-class pair cosines as follows:
 
 | Seed | Raw mean change | Centered mean change | Centered mean absolute change |
 |---|---:|---:|---:|
@@ -99,67 +57,64 @@ pairs, mean cosine changes after suppression are:
 | 1 | +0.0851 | +0.0025 | 0.0228 |
 | 2 | +0.0729 | +0.0004 | 0.0254 |
 
-Centering uses each model's retained calibration mean. The broadly positive
-raw change becomes mixed after centering, but nonzero differences remain.
-Signed means can cancel, and centering constrains aggregate geometry; this
-is not proof that a common offset explains everything. Mean Euclidean
-separation among different retained classes decreases about 5–12% after
-suppression, a scale-sensitive observation rather than evidence of erasure.
+Centering on retained calibration means makes the broadly positive change mixed,
+but nonzero differences remain. Signed means can cancel, and centering
+constrains aggregate geometry; a common offset is not a complete explanation
+established by this comparison. Mean Euclidean separation between different
+retained classes decreases about 5–12% after suppression.
 
-Validation: fourteen consolidated representation tests cover metric invariants,
-class summaries, retained-only centering, artifact integrity, and single- and
-multiple-layer report generation. Original metrics and raw class cosines were
-compared against the previous reports and match exactly in all three seeds.
-The figures were inspected visually. Desktop CPU extraction is now validated;
-CUDA extraction remains untested because the NVIDIA driver was unavailable.
+The seed-0 PCA view explains about 49.6% of calibration variance in two axes.
+Calibration rank is below the 64-dimensional feature space, leaving rotations
+outside its span underdetermined. The per-run diagnostics record these limits.
+
+## CIFAR-10: differences increase in later layers
+
+The existing seed-0 ResNet-18 checkpoints are evaluated on 100 airplane and
+900 retained images from the search split. A separate 900 retained selection
+examples fit alignment/PCA. These splits have been used previously, so this is
+also exploratory.
+
+For held-out airplane examples, original/suppressed debiased CKA falls from
+0.9996 at layer1 to 0.5396 at layer4. Final-layer comparisons are:
+
+| Pair | Airplane debiased CKA | Airplane shared 10-neighbor fraction | Retained debiased CKA |
+|---|---:|---:|---:|
+| Original / unlearned | 0.5396 | 0.400 | 0.9716 |
+| Original / retrained | 0.3572 | 0.122 | 0.9382 |
+| Unlearned / retrained | 0.2169 | 0.115 | 0.9149 |
+
+In the shared PCA view, airplane examples form compact clouds in the original
+and suppressed models but spread more broadly in the retrained model. Retained
+class clouds look broadly similar. This contrast is more pronounced than in
+digits and suggests a hypothesis for further study. The two axes explain only
+30.7% of calibration variance; the picture does not establish full-space
+separation or erasure.
+
+Airplane accuracy is 97% in the original and 0% in both other models, which
+still disagree on 60% of airplane predictions. Retained accuracies are 94.78%,
+95.44%, and 94.33%. These behavioral and geometric differences cannot yet be
+attributed uniquely to suppression rather than retraining variability.
 
 ## Limits and next experiment
 
-There are only 17â€“18 held-out forget examples per seed. Scores are descriptive,
-without confidence intervals or an equivalence threshold. Original and retrained
-models share an initialization seed, and the existing seeds change data splits.
-These three configurations cannot estimate pure retrain/retrain variability.
+The digits analysis has only 17–18 held-out forgotten examples per seed. The
+ResNet analysis has one checkpoint trio. Neither includes independent retrains
+on an identical retained dataset, confidence intervals, or an equivalence
+threshold. Original and retrained models share initialization seeds; changing
+seeds in the current training program also changes data splits.
 
-Add independently retrained models on an identical fixed retained dataset, and
-repeat the ResNet analysis across configurations. Confirm that the original/retrained difference is detectable
-before interpreting original/unlearned similarity. Repeat with a validated
-published unlearning method before extending conclusions beyond suppression.
+Add fixed-split independent retraining controls and repeat the ResNet analysis
+across configurations. Establish whether original/retrained differences are
+detectable before interpreting original/unlearned similarity. A published
+unlearning method is needed before extending conclusions beyond suppression.
 
+## Evidence
 
-## Desktop ResNet-18 pilot
+- Digits: [seed 0](seed0/REPORT.md), [seed 1](seed1/REPORT.md),
+  [seed 2](seed2/REPORT.md), and [cross-seed summary](summary.json).
+- CIFAR-10: [ResNet seed 0](resnet-seed0/REPORT.md).
 
-The [seed 0 report](resnet-seed0/REPORT.md) and its figures, tables, numerical
-metrics and provenance are tracked alongside the digits results. The existing
-original, incorrect-label suppression, and retained-only retrained checkpoints
-were evaluated on the same CIFAR-10 inputs. The held-out search split contains
-100 airplane (forget) and 900 retained examples; 900 retained selection examples
-fit alignment and PCA. These previously used splits make the analysis exploratory.
-
-![ResNet shared PCA](resnet-seed0/pca.png)
-
-The airplane cloud is compact in the original and suppressed models, but spreads
-across the plot in the retrained model. Retained class clouds look broadly similar.
-This visible contrast is more pronounced than in the digits pilot and is a useful
-hypothesis for further study. The shared axes and orthogonal alignment are fitted
-on retained calibration examples; the two axes explain 30.7% of calibration
-variance, so the picture alone cannot establish full-space separation or erasure.
-
-Full-space metrics also show a layer-dependent difference. For held-out airplane
-examples, original/suppressed debiased CKA falls from 0.9996 at layer1 to 0.5396
-at layer4; original/retrained and suppressed/retrained layer4 values are 0.3572
-and 0.2169. Corresponding shared 10-neighbor fractions at layer4 are 0.400,
-0.122, and 0.115. On retained examples, layer4 debiased CKA is 0.9716, 0.9382,
-and 0.9149 respectively. These measures capture different aspects of geometry,
-and none alone establishes successful unlearning.
-
-Airplane accuracy falls from 97% in the original to 0% in both other models;
-the latter two still disagree on 60% of airplane predictions. Retained accuracy
-is 94.78%, 95.44%, and 94.33%, respectively. This is one checkpoint trio, with
-no fixed-split independent retraining controls or uncertainty estimates; differences
-cannot yet be attributed uniquely to suppression versus retraining variability.
-
-Validation used PyTorch on CPU: all 28 repository tests passed, as did a synthetic
-ResNet smoke extraction and analysis and the real checkpoint extraction. CUDA was
-unavailable because the NVIDIA driver could not be contacted. The feature bundle
-remains in ignored `runs/`; tracked outputs include the generated report and its
-supporting artifacts.
+Each report links its complete numerical measurements, CSV tables, plot
+diagnostics, and checkpoint/reference provenance. The digits feature bundles
+can be regenerated from the archived model fixtures. ResNet extraction requires
+the original checkpoint files, which are not distributed in this repository.
