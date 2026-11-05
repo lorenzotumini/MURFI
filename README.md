@@ -71,21 +71,25 @@ The default command runs the full campaign and refuses to overwrite an existing
 directory. See the [random-flip guide](docs/random-flips.md) for the protocol and
 [results](reports/random-flips/RESULTS.md) for the archived measurements.
 
-## Reading and checking the work
+## Further reading
 
-A separate [representation analysis](docs/representation-analysis.md) compares
-original, suppressed, and retrained models through matched-input activations,
-CKA, nearest-neighbor overlap, and PCA. It supports archived digits and ResNet
-checkpoints. See the [representation results](reports/representations/RESULTS.md).
+- **[Findings and limitations](FINDINGS.md)** — Start here for the main
+  conclusions from targeted and random flips, and the limits of their
+  interpretation.
+- **[Representation results](reports/representations/RESULTS.md)** — Comparisons
+  of original, suppressed, and retrained models on digits and CIFAR-10, with
+  links to detailed tables and plots.
+- **[Representation analysis guide](docs/representation-analysis.md)** — How
+  to reproduce those comparisons and interpret CKA, nearest-neighbor overlap,
+  class similarities, and PCA.
+- **[Candidate external checkpoints](docs/checkpoint-candidates.md)** —
+  Possibilities for future experiments and the validation needed before use.
 
-- [Cross-experiment findings and limitations](FINDINGS.md).
-- [Candidate external checkpoints](docs/checkpoint-candidates.md).
+Experiment reports in `reports/` include supporting evidence. Downloaded
+datasets belong in `data/`; new run outputs belong in `runs/`. Both directories
+are ignored by Git.
 
-Reports are organized as `reports/targeted-flips/cpu/`,
-`reports/targeted-flips/gpu/`, `reports/random-flips/`, and
-`reports/representations/`. Each contains its
-result report and supporting evidence. Downloaded datasets belong in `data/`;
-new run outputs belong in `runs/`. Both directories are ignored by Git.
+## Running the tests
 
 To run the full test suite, install both the CPU dependencies and the
 PyTorch/torchvision pair described in the GPU guide, then run:
@@ -94,5 +98,5 @@ PyTorch/torchvision pair described in the GPU guide, then run:
 python -m unittest discover -s tests -v
 ```
 
-The tests cover FP32 bit mutations, search constraints, and evaluation of
-frozen checkpoints without rerunning search.
+The tests cover FP32 bit mutations, search constraints, evaluation of frozen
+checkpoints without rerunning search, and representation metrics and artifacts.
