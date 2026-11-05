@@ -1,0 +1,3033 @@
+{
+  "snapshot": "2026-11-05T12:14:45.653929+01:00",
+  "entries": [
+    {
+      "configuration": "initial-greedy",
+      "source": "runs/resnet18-seed0-class0-20261105-021912/search",
+      "status": "complete",
+      "config": {
+        "stage": "retrain",
+        "root": "runs/resnet18-seed0-class0-20261105-021912",
+        "data": "data",
+        "device": "cuda:1",
+        "seed": 0,
+        "forget_class": 0,
+        "epochs": 100,
+        "unlearn_epochs": 15,
+        "unlearn_lr": 0.001,
+        "batch_size": 128,
+        "workers": 4,
+        "budget": 32,
+        "random_trials": 20,
+        "candidate_weights": 128,
+        "candidate_tests": 8,
+        "probe_per_class": 32,
+        "exclude_head": false,
+        "retain_drop": 0.02,
+        "fpr_rise": 0.01,
+        "threads": 4
+      },
+      "selected": {
+        "unlearned": {
+          "bits": 3,
+          "validation": {
+            "valid": true,
+            "forget_accuracy": 0.004000000189989805,
+            "retain_accuracy": 0.9333332777023315,
+            "forget_precision": 0.2222222222222222,
+            "forget_false_positive_rate": 0.0015555555555555555,
+            "per_class_accuracy": [
+              0.004000000189989805,
+              0.9760000109672546,
+              0.9679999947547913,
+              0.8059999942779541,
+              0.9359999895095825,
+              0.8560000061988831,
+              0.9419999718666077,
+              0.9559999704360962,
+              0.9800000190734863,
+              0.9800000190734863
+            ],
+            "confusion_matrix": [
+              [
+                2,
+                7,
+                425,
+                3,
+                6,
+                0,
+                1,
+                3,
+                30,
+                23
+              ],
+              [
+                1,
+                488,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                3,
+                8
+              ],
+              [
+                0,
+                0,
+                484,
+                2,
+                5,
+                2,
+                4,
+                1,
+                2,
+                0
+              ],
+              [
+                3,
+                1,
+                51,
+                403,
+                12,
+                14,
+                5,
+                4,
+                5,
+                2
+              ],
+              [
+                0,
+                0,
+                13,
+                2,
+                468,
+                2,
+                3,
+                8,
+                2,
+                2
+              ],
+              [
+                1,
+                0,
+                19,
+                20,
+                9,
+                428,
+                3,
+                11,
+                6,
+                3
+              ],
+              [
+                1,
+                0,
+                17,
+                5,
+                1,
+                2,
+                471,
+                1,
+                2,
+                0
+              ],
+              [
+                1,
+                0,
+                12,
+                1,
+                3,
+                4,
+                0,
+                478,
+                1,
+                0
+              ],
+              [
+                0,
+                2,
+                6,
+                0,
+                0,
+                0,
+                0,
+                0,
+                490,
+                2
+              ],
+              [
+                0,
+                5,
+                1,
+                0,
+                0,
+                0,
+                0,
+                0,
+                4,
+                490
+              ]
+            ]
+          },
+          "trace": [
+            {
+              "parameter": "layer4.0.downsample.0.weight",
+              "index": 34768,
+              "bit": 25,
+              "before": 0.09167467057704926,
+              "after": 1.466794729232788,
+              "probe_objective": 5.138662338256836
+            },
+            {
+              "parameter": "layer3.0.downsample.0.weight",
+              "index": 26667,
+              "bit": 25,
+              "before": 0.07506842911243439,
+              "after": 1.2010948657989502,
+              "probe_objective": 3.8369815349578857
+            },
+            {
+              "parameter": "layer2.0.conv1.weight",
+              "index": 2051,
+              "bit": 25,
+              "before": -0.10734637081623077,
+              "after": -1.7175419330596924,
+              "probe_objective": 3.7554996013641357
+            }
+          ]
+        },
+        "retrained": {
+          "bits": 0,
+          "validation": {
+            "valid": true,
+            "forget_accuracy": 0.0,
+            "retain_accuracy": 0.9431111812591553,
+            "forget_precision": 0.0,
+            "forget_false_positive_rate": 0.0,
+            "per_class_accuracy": [
+              0.0,
+              0.9760000109672546,
+              0.9200000166893005,
+              0.8920000195503235,
+              0.9459999799728394,
+              0.8939999938011169,
+              0.9580000042915344,
+              0.9440000057220459,
+              0.984000027179718,
+              0.9739999771118164
+            ],
+            "confusion_matrix": [
+              [
+                0,
+                14,
+                199,
+                28,
+                28,
+                4,
+                7,
+                16,
+                137,
+                67
+              ],
+              [
+                0,
+                488,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                2,
+                10
+              ],
+              [
+                0,
+                1,
+                460,
+                13,
+                11,
+                3,
+                7,
+                1,
+                2,
+                2
+              ],
+              [
+                0,
+                0,
+                5,
+                446,
+                6,
+                34,
+                4,
+                5,
+                0,
+                0
+              ],
+              [
+                0,
+                0,
+                9,
+                10,
+                473,
+                3,
+                2,
+                3,
+                0,
+                0
+              ],
+              [
+                0,
+                0,
+                4,
+                32,
+                8,
+                447,
+                1,
+                6,
+                1,
+                1
+              ],
+              [
+                0,
+                0,
+                8,
+                6,
+                2,
+                4,
+                479,
+                1,
+                0,
+                0
+              ],
+              [
+                0,
+                0,
+                5,
+                8,
+                4,
+                10,
+                0,
+                472,
+                0,
+                1
+              ],
+              [
+                0,
+                1,
+                2,
+                1,
+                2,
+                0,
+                1,
+                0,
+                492,
+                1
+              ],
+              [
+                0,
+                8,
+                1,
+                0,
+                0,
+                0,
+                1,
+                0,
+                3,
+                487
+              ]
+            ]
+          },
+          "trace": []
+        }
+      },
+      "evaluation_split": "test",
+      "test": {
+        "unlearned": {
+          "bits": 3,
+          "metrics": {
+            "valid": true,
+            "forget_accuracy": 0.004000000189989805,
+            "retain_accuracy": 0.9278888702392578,
+            "forget_precision": 0.2,
+            "forget_false_positive_rate": 0.0017777777777777779,
+            "per_class_accuracy": [
+              0.004000000189989805,
+              0.9789999723434448,
+              0.9520000219345093,
+              0.7649999856948853,
+              0.9470000267028809,
+              0.8610000014305115,
+              0.9470000267028809,
+              0.9649999737739563,
+              0.9670000076293945,
+              0.9679999947547913
+            ],
+            "confusion_matrix": [
+              [
+                4,
+                19,
+                816,
+                7,
+                11,
+                2,
+                5,
+                13,
+                83,
+                40
+              ],
+              [
+                0,
+                979,
+                2,
+                0,
+                0,
+                0,
+                0,
+                0,
+                2,
+                17
+              ],
+              [
+                2,
+                0,
+                952,
+                8,
+                13,
+                6,
+                10,
+                4,
+                3,
+                2
+              ],
+              [
+                7,
+                3,
+                103,
+                765,
+                23,
+                52,
+                17,
+                17,
+                7,
+                6
+              ],
+              [
+                0,
+                0,
+                23,
+                6,
+                947,
+                2,
+                9,
+                11,
+                2,
+                0
+              ],
+              [
+                3,
+                1,
+                55,
+                43,
+                16,
+                861,
+                3,
+                8,
+                7,
+                3
+              ],
+              [
+                1,
+                1,
+                31,
+                7,
+                6,
+                2,
+                947,
+                1,
+                2,
+                2
+              ],
+              [
+                1,
+                0,
+                14,
+                6,
+                9,
+                3,
+                0,
+                965,
+                2,
+                0
+              ],
+              [
+                2,
+                3,
+                19,
+                1,
+                0,
+                0,
+                2,
+                0,
+                967,
+                6
+              ],
+              [
+                0,
+                21,
+                2,
+                2,
+                0,
+                0,
+                0,
+                0,
+                7,
+                968
+              ]
+            ]
+          }
+        },
+        "retrained": {
+          "bits": 0,
+          "metrics": {
+            "valid": true,
+            "forget_accuracy": 0.0,
+            "retain_accuracy": 0.9453333616256714,
+            "forget_precision": 0.0,
+            "forget_false_positive_rate": 0.0,
+            "per_class_accuracy": [
+              0.0,
+              0.9779999852180481,
+              0.9190000295639038,
+              0.8840000033378601,
+              0.9580000042915344,
+              0.9079999923706055,
+              0.9509999752044678,
+              0.9649999737739563,
+              0.9789999723434448,
+              0.9660000205039978
+            ],
+            "confusion_matrix": [
+              [
+                0,
+                36,
+                379,
+                76,
+                51,
+                7,
+                18,
+                27,
+                313,
+                93
+              ],
+              [
+                0,
+                978,
+                0,
+                1,
+                1,
+                0,
+                0,
+                1,
+                5,
+                14
+              ],
+              [
+                0,
+                0,
+                919,
+                22,
+                16,
+                16,
+                13,
+                7,
+                5,
+                2
+              ],
+              [
+                0,
+                2,
+                12,
+                884,
+                15,
+                58,
+                13,
+                10,
+                4,
+                2
+              ],
+              [
+                0,
+                1,
+                7,
+                17,
+                958,
+                5,
+                5,
+                7,
+                0,
+                0
+              ],
+              [
+                0,
+                1,
+                7,
+                57,
+                19,
+                908,
+                1,
+                6,
+                1,
+                0
+              ],
+              [
+                0,
+                2,
+                12,
+                21,
+                5,
+                7,
+                951,
+                0,
+                1,
+                1
+              ],
+              [
+                0,
+                0,
+                4,
+                13,
+                11,
+                7,
+                0,
+                965,
+                0,
+                0
+              ],
+              [
+                0,
+                3,
+                2,
+                4,
+                1,
+                0,
+                2,
+                1,
+                979,
+                8
+              ],
+              [
+                0,
+                21,
+                2,
+                2,
+                0,
+                0,
+                2,
+                0,
+                7,
+                966
+              ]
+            ]
+          }
+        }
+      }
+    },
+    {
+      "configuration": "wide-greedy",
+      "source": "runs/resnet18-seed0-class0-20261105-021912/campaign-20261105-111121-wide-greedy128",
+      "status": "complete",
+      "config": {
+        "stage": "search",
+        "root": "/home/lorenzo/Projects/MURFI/runs/resnet18-seed0-class0-20261105-021912",
+        "data": "data",
+        "device": "cuda:0",
+        "seed": 0,
+        "forget_class": 0,
+        "epochs": 100,
+        "unlearn_epochs": 15,
+        "unlearn_lr": 0.001,
+        "batch_size": 128,
+        "workers": 0,
+        "budget": 128,
+        "random_trials": 20,
+        "candidate_weights": 1024,
+        "candidate_tests": 64,
+        "probe_per_class": 32,
+        "exclude_head": false,
+        "retain_drop": 0.02,
+        "fpr_rise": 0.01,
+        "threads": 4,
+        "algorithm": "greedy",
+        "beam_width": 3,
+        "branch_factor": 3,
+        "forget_weight": 1.0,
+        "validation_only": true,
+        "search_name": "campaign-20261105-111121-wide-greedy128"
+      },
+      "selected": {
+        "unlearned": {
+          "bits": 3,
+          "validation": {
+            "valid": true,
+            "forget_accuracy": 0.05000000074505806,
+            "retain_accuracy": 0.9304444193840027,
+            "forget_precision": 0.373134328358209,
+            "forget_false_positive_rate": 0.009333333333333334,
+            "per_class_accuracy": [
+              0.05000000074505806,
+              0.9779999852180481,
+              0.9599999785423279,
+              0.8119999766349792,
+              0.9380000233650208,
+              0.8500000238418579,
+              0.9440000057220459,
+              0.9480000138282776,
+              0.9639999866485596,
+              0.9800000190734863
+            ],
+            "confusion_matrix": [
+              [
+                25,
+                8,
+                399,
+                5,
+                7,
+                0,
+                1,
+                4,
+                27,
+                24
+              ],
+              [
+                1,
+                489,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                2,
+                8
+              ],
+              [
+                2,
+                0,
+                480,
+                3,
+                5,
+                2,
+                5,
+                1,
+                2,
+                0
+              ],
+              [
+                13,
+                1,
+                39,
+                406,
+                11,
+                15,
+                5,
+                4,
+                4,
+                2
+              ],
+              [
+                4,
+                0,
+                11,
+                2,
+                469,
+                2,
+                2,
+                7,
+                1,
+                2
+              ],
+              [
+                3,
+                0,
+                17,
+                22,
+                9,
+                425,
+                4,
+                12,
+                4,
+                4
+              ],
+              [
+                4,
+                0,
+                12,
+                5,
+                1,
+                3,
+                472,
+                1,
+                2,
+                0
+              ],
+              [
+                4,
+                0,
+                10,
+                1,
+                5,
+                5,
+                0,
+                474,
+                1,
+                0
+              ],
+              [
+                11,
+                2,
+                3,
+                0,
+                0,
+                0,
+                0,
+                0,
+                482,
+                2
+              ],
+              [
+                0,
+                6,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                4,
+                490
+              ]
+            ]
+          },
+          "trace": [
+            {
+              "parameter": "layer4.0.downsample.0.weight",
+              "index": 34768,
+              "bit": 25,
+              "before": 0.09167467057704926,
+              "after": 1.466794729232788,
+              "probe_objective": 5.138662338256836
+            },
+            {
+              "parameter": "layer3.0.downsample.0.weight",
+              "index": 26667,
+              "bit": 25,
+              "before": 0.07506842911243439,
+              "after": 1.2010948657989502,
+              "probe_objective": 3.8369812965393066
+            },
+            {
+              "parameter": "fc.weight",
+              "index": 482,
+              "bit": 25,
+              "before": 0.1083725169301033,
+              "after": 1.7339602708816528,
+              "probe_objective": 3.2986223697662354
+            }
+          ]
+        },
+        "retrained": {
+          "bits": 0,
+          "validation": {
+            "valid": true,
+            "forget_accuracy": 0.0,
+            "retain_accuracy": 0.9431111812591553,
+            "forget_precision": 0.0,
+            "forget_false_positive_rate": 0.0,
+            "per_class_accuracy": [
+              0.0,
+              0.9760000109672546,
+              0.9200000166893005,
+              0.8920000195503235,
+              0.9459999799728394,
+              0.8939999938011169,
+              0.9580000042915344,
+              0.9440000057220459,
+              0.984000027179718,
+              0.9739999771118164
+            ],
+            "confusion_matrix": [
+              [
+                0,
+                14,
+                199,
+                28,
+                28,
+                4,
+                7,
+                16,
+                137,
+                67
+              ],
+              [
+                0,
+                488,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                2,
+                10
+              ],
+              [
+                0,
+                1,
+                460,
+                13,
+                11,
+                3,
+                7,
+                1,
+                2,
+                2
+              ],
+              [
+                0,
+                0,
+                5,
+                446,
+                6,
+                34,
+                4,
+                5,
+                0,
+                0
+              ],
+              [
+                0,
+                0,
+                9,
+                10,
+                473,
+                3,
+                2,
+                3,
+                0,
+                0
+              ],
+              [
+                0,
+                0,
+                4,
+                32,
+                8,
+                447,
+                1,
+                6,
+                1,
+                1
+              ],
+              [
+                0,
+                0,
+                8,
+                6,
+                2,
+                4,
+                479,
+                1,
+                0,
+                0
+              ],
+              [
+                0,
+                0,
+                5,
+                8,
+                4,
+                10,
+                0,
+                472,
+                0,
+                1
+              ],
+              [
+                0,
+                1,
+                2,
+                1,
+                2,
+                0,
+                1,
+                0,
+                492,
+                1
+              ],
+              [
+                0,
+                8,
+                1,
+                0,
+                0,
+                0,
+                1,
+                0,
+                3,
+                487
+              ]
+            ]
+          },
+          "trace": []
+        }
+      },
+      "diagnostics": {
+        "unlearned": {
+          "algorithm": "greedy",
+          "stop_reason": "no_acceptable_extensions",
+          "depth_reached": 4,
+          "selected_bits": 3
+        },
+        "retrained": {
+          "algorithm": "greedy",
+          "stop_reason": "no_acceptable_extensions",
+          "depth_reached": 15,
+          "selected_bits": 0
+        }
+      },
+      "evaluation_split": "selection"
+    },
+    {
+      "configuration": "beam64",
+      "source": "runs/resnet18-seed0-class0-20261105-021912/campaign-20261105-111121-beam64",
+      "status": "stopped",
+      "config": {
+        "stage": "search",
+        "root": "/home/lorenzo/Projects/MURFI/runs/resnet18-seed0-class0-20261105-021912",
+        "data": "data",
+        "device": "cuda:1",
+        "seed": 0,
+        "forget_class": 0,
+        "epochs": 100,
+        "unlearn_epochs": 15,
+        "unlearn_lr": 0.001,
+        "batch_size": 128,
+        "workers": 0,
+        "budget": 64,
+        "random_trials": 20,
+        "candidate_weights": 1024,
+        "candidate_tests": 64,
+        "probe_per_class": 32,
+        "exclude_head": false,
+        "retain_drop": 0.02,
+        "fpr_rise": 0.01,
+        "threads": 4,
+        "algorithm": "beam",
+        "beam_width": 3,
+        "branch_factor": 3,
+        "forget_weight": 1.0,
+        "validation_only": true,
+        "search_name": "campaign-20261105-111121-beam64"
+      },
+      "selected": {
+        "unlearned": {
+          "bits": 6,
+          "validation": {
+            "valid": true,
+            "forget_accuracy": 0.164000004529953,
+            "retain_accuracy": 0.9384444355964661,
+            "forget_precision": 0.656,
+            "forget_false_positive_rate": 0.009555555555555555,
+            "per_class_accuracy": [
+              0.164000004529953,
+              0.9760000109672546,
+              0.9440000057220459,
+              0.8560000061988831,
+              0.9440000057220459,
+              0.8600000143051147,
+              0.9580000042915344,
+              0.9599999785423279,
+              0.9700000286102295,
+              0.9779999852180481
+            ],
+            "confusion_matrix": [
+              [
+                82,
+                14,
+                317,
+                10,
+                7,
+                1,
+                3,
+                7,
+                33,
+                26
+              ],
+              [
+                2,
+                488,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                2,
+                8
+              ],
+              [
+                7,
+                0,
+                472,
+                4,
+                7,
+                3,
+                4,
+                1,
+                2,
+                0
+              ],
+              [
+                10,
+                1,
+                16,
+                428,
+                10,
+                18,
+                7,
+                4,
+                4,
+                2
+              ],
+              [
+                3,
+                0,
+                8,
+                2,
+                472,
+                3,
+                1,
+                7,
+                2,
+                2
+              ],
+              [
+                5,
+                0,
+                10,
+                28,
+                10,
+                430,
+                5,
+                10,
+                2,
+                0
+              ],
+              [
+                2,
+                0,
+                6,
+                5,
+                2,
+                3,
+                479,
+                1,
+                2,
+                0
+              ],
+              [
+                3,
+                0,
+                6,
+                2,
+                4,
+                5,
+                0,
+                480,
+                0,
+                0
+              ],
+              [
+                11,
+                2,
+                1,
+                0,
+                0,
+                0,
+                0,
+                0,
+                485,
+                1
+              ],
+              [
+                0,
+                6,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                5,
+                489
+              ]
+            ]
+          },
+          "trace": [
+            {
+              "parameter": "layer4.0.downsample.0.weight",
+              "index": 34768,
+              "bit": 25,
+              "before": 0.09167467057704926,
+              "after": 1.466794729232788,
+              "probe_objective": 5.138662338256836
+            },
+            {
+              "parameter": "layer3.0.downsample.0.weight",
+              "index": 26683,
+              "bit": 25,
+              "before": 0.053446173667907715,
+              "after": 0.8551387786865234,
+              "probe_objective": 4.182340145111084
+            },
+            {
+              "parameter": "fc.weight",
+              "index": 135,
+              "bit": 24,
+              "before": 0.32156476378440857,
+              "after": 1.2862590551376343,
+              "probe_objective": 2.9644293785095215
+            },
+            {
+              "parameter": "layer1.1.conv1.weight",
+              "index": 16445,
+              "bit": 25,
+              "before": -0.09974665194749832,
+              "after": -1.5959464311599731,
+              "probe_objective": 2.894498348236084
+            },
+            {
+              "parameter": "layer2.0.conv1.weight",
+              "index": 52794,
+              "bit": 25,
+              "before": -0.09337515383958817,
+              "after": -1.4940024614334106,
+              "probe_objective": 2.821303129196167
+            },
+            {
+              "parameter": "layer1.0.conv2.weight",
+              "index": 21863,
+              "bit": 25,
+              "before": -0.07818470150232315,
+              "after": -1.2509552240371704,
+              "probe_objective": 2.7673141956329346
+            }
+          ]
+        }
+      },
+      "diagnostics": {
+        "unlearned": {
+          "algorithm": "beam",
+          "stop_reason": "no_acceptable_extensions",
+          "depth_reached": 6,
+          "selected_bits": 6
+        }
+      }
+    },
+    {
+      "configuration": "beam64-forget4",
+      "source": "runs/resnet18-seed0-class0-20261105-021912/campaign-20261105-111121-beam64-forget4",
+      "status": "stopped",
+      "config": {
+        "stage": "search",
+        "root": "/home/lorenzo/Projects/MURFI/runs/resnet18-seed0-class0-20261105-021912",
+        "data": "data",
+        "device": "cuda:0",
+        "seed": 0,
+        "forget_class": 0,
+        "epochs": 100,
+        "unlearn_epochs": 15,
+        "unlearn_lr": 0.001,
+        "batch_size": 128,
+        "workers": 0,
+        "budget": 64,
+        "random_trials": 20,
+        "candidate_weights": 1024,
+        "candidate_tests": 64,
+        "probe_per_class": 32,
+        "exclude_head": false,
+        "retain_drop": 0.02,
+        "fpr_rise": 0.01,
+        "threads": 4,
+        "algorithm": "beam",
+        "beam_width": 3,
+        "branch_factor": 3,
+        "forget_weight": 4.0,
+        "validation_only": true,
+        "search_name": "campaign-20261105-111121-beam64-forget4"
+      },
+      "selected": {
+        "unlearned": {
+          "bits": 3,
+          "validation": {
+            "valid": true,
+            "forget_accuracy": 0.05000000074505806,
+            "retain_accuracy": 0.9304444193840027,
+            "forget_precision": 0.373134328358209,
+            "forget_false_positive_rate": 0.009333333333333334,
+            "per_class_accuracy": [
+              0.05000000074505806,
+              0.9779999852180481,
+              0.9599999785423279,
+              0.8119999766349792,
+              0.9380000233650208,
+              0.8500000238418579,
+              0.9440000057220459,
+              0.9480000138282776,
+              0.9639999866485596,
+              0.9800000190734863
+            ],
+            "confusion_matrix": [
+              [
+                25,
+                8,
+                399,
+                5,
+                7,
+                0,
+                1,
+                4,
+                27,
+                24
+              ],
+              [
+                1,
+                489,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                2,
+                8
+              ],
+              [
+                2,
+                0,
+                480,
+                3,
+                5,
+                2,
+                5,
+                1,
+                2,
+                0
+              ],
+              [
+                13,
+                1,
+                39,
+                406,
+                11,
+                15,
+                5,
+                4,
+                4,
+                2
+              ],
+              [
+                4,
+                0,
+                11,
+                2,
+                469,
+                2,
+                2,
+                7,
+                1,
+                2
+              ],
+              [
+                3,
+                0,
+                17,
+                22,
+                9,
+                425,
+                4,
+                12,
+                4,
+                4
+              ],
+              [
+                4,
+                0,
+                12,
+                5,
+                1,
+                3,
+                472,
+                1,
+                2,
+                0
+              ],
+              [
+                4,
+                0,
+                10,
+                1,
+                5,
+                5,
+                0,
+                474,
+                1,
+                0
+              ],
+              [
+                11,
+                2,
+                3,
+                0,
+                0,
+                0,
+                0,
+                0,
+                482,
+                2
+              ],
+              [
+                0,
+                6,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                4,
+                490
+              ]
+            ]
+          },
+          "trace": [
+            {
+              "parameter": "layer4.0.downsample.0.weight",
+              "index": 34768,
+              "bit": 25,
+              "before": 0.09167467057704926,
+              "after": 1.466794729232788,
+              "probe_objective": 19.989225387573242
+            },
+            {
+              "parameter": "layer3.0.downsample.0.weight",
+              "index": 26667,
+              "bit": 25,
+              "before": 0.07506842911243439,
+              "after": 1.2010948657989502,
+              "probe_objective": 14.643017768859863
+            },
+            {
+              "parameter": "fc.weight",
+              "index": 482,
+              "bit": 25,
+              "before": 0.1083725169301033,
+              "after": 1.7339602708816528,
+              "probe_objective": 12.45219898223877
+            }
+          ]
+        }
+      },
+      "diagnostics": {
+        "unlearned": {
+          "algorithm": "beam",
+          "stop_reason": "no_acceptable_extensions",
+          "depth_reached": 5,
+          "selected_bits": 3
+        }
+      }
+    },
+    {
+      "configuration": "beam64-forget4-nohead",
+      "source": "runs/resnet18-seed0-class0-20261105-021912/campaign-20261105-111121-beam64-forget4-nohead",
+      "status": "not_started"
+    },
+    {
+      "configuration": "cached-magnitude",
+      "source": "runs/resnet18-seed0-class0-20261105-021912/campaign-fast-20261105-114258-cached-magnitude",
+      "status": "complete",
+      "config": {
+        "stage": "search",
+        "root": "/home/lorenzo/Projects/MURFI/runs/resnet18-seed0-class0-20261105-021912",
+        "data": "data",
+        "device": "cuda:0",
+        "seed": 0,
+        "forget_class": 0,
+        "epochs": 100,
+        "unlearn_epochs": 15,
+        "unlearn_lr": 0.001,
+        "batch_size": 128,
+        "workers": 0,
+        "budget": 64,
+        "random_trials": 20,
+        "candidate_weights": 1024,
+        "candidate_tests": 32,
+        "probe_per_class": 32,
+        "exclude_head": false,
+        "retain_drop": 0.02,
+        "fpr_rise": 0.01,
+        "threads": 4,
+        "algorithm": "beam",
+        "beam_width": 2,
+        "branch_factor": 2,
+        "forget_weight": 1.0,
+        "validation_only": true,
+        "search_name": "campaign-fast-20261105-114258-cached-magnitude",
+        "cache_eval": true,
+        "ranking": "magnitude",
+        "screen_per_class": 32,
+        "screen_slack": 0.02,
+        "validation_candidates": 4,
+        "max_candidate_evals": 512,
+        "max_full_validations": 48,
+        "max_search_seconds": 180.0
+      },
+      "selected": {
+        "unlearned": {
+          "bits": 4,
+          "validation": {
+            "valid": true,
+            "forget_accuracy": 0.04600000008940697,
+            "retain_accuracy": 0.9297778010368347,
+            "forget_precision": 0.5476190476190477,
+            "forget_false_positive_rate": 0.004222222222222222,
+            "per_class_accuracy": [
+              0.04600000008940697,
+              0.9800000190734863,
+              0.9520000219345093,
+              0.8159999847412109,
+              0.9039999842643738,
+              0.878000020980835,
+              0.9340000152587891,
+              0.9620000123977661,
+              0.972000002861023,
+              0.9700000286102295
+            ],
+            "confusion_matrix": [
+              [
+                23,
+                20,
+                298,
+                8,
+                8,
+                1,
+                4,
+                8,
+                81,
+                49
+              ],
+              [
+                0,
+                490,
+                1,
+                0,
+                0,
+                0,
+                0,
+                0,
+                2,
+                7
+              ],
+              [
+                5,
+                0,
+                476,
+                4,
+                3,
+                7,
+                1,
+                1,
+                3,
+                0
+              ],
+              [
+                4,
+                2,
+                26,
+                408,
+                6,
+                32,
+                3,
+                6,
+                5,
+                8
+              ],
+              [
+                4,
+                1,
+                18,
+                3,
+                452,
+                6,
+                2,
+                7,
+                5,
+                2
+              ],
+              [
+                3,
+                1,
+                11,
+                21,
+                9,
+                439,
+                1,
+                10,
+                3,
+                2
+              ],
+              [
+                2,
+                1,
+                11,
+                7,
+                4,
+                4,
+                467,
+                1,
+                2,
+                1
+              ],
+              [
+                0,
+                0,
+                10,
+                2,
+                2,
+                4,
+                0,
+                481,
+                0,
+                1
+              ],
+              [
+                1,
+                6,
+                4,
+                0,
+                0,
+                0,
+                0,
+                0,
+                486,
+                3
+              ],
+              [
+                0,
+                9,
+                3,
+                0,
+                0,
+                0,
+                0,
+                0,
+                3,
+                485
+              ]
+            ]
+          },
+          "trace": [
+            {
+              "parameter": "fc.weight",
+              "index": 482,
+              "bit": 25,
+              "before": 0.1083725169301033,
+              "after": 1.7339602708816528,
+              "probe_objective": 5.276315212249756
+            },
+            {
+              "parameter": "layer2.0.downsample.0.weight",
+              "index": 6570,
+              "bit": 25,
+              "before": 0.05967748910188675,
+              "after": 0.954839825630188,
+              "probe_objective": 4.935248851776123
+            },
+            {
+              "parameter": "layer4.0.downsample.0.weight",
+              "index": 34768,
+              "bit": 25,
+              "before": 0.09167467057704926,
+              "after": 1.466794729232788,
+              "probe_objective": 4.549742698669434
+            },
+            {
+              "parameter": "layer3.0.downsample.0.weight",
+              "index": 26683,
+              "bit": 25,
+              "before": 0.053446173667907715,
+              "after": 0.8551387786865234,
+              "probe_objective": 3.321647882461548
+            }
+          ]
+        },
+        "retrained": {
+          "bits": 0,
+          "validation": {
+            "valid": true,
+            "forget_accuracy": 0.0,
+            "retain_accuracy": 0.9431111812591553,
+            "forget_precision": 0.0,
+            "forget_false_positive_rate": 0.0,
+            "per_class_accuracy": [
+              0.0,
+              0.9760000109672546,
+              0.9200000166893005,
+              0.8920000195503235,
+              0.9459999799728394,
+              0.8939999938011169,
+              0.9580000042915344,
+              0.9440000057220459,
+              0.984000027179718,
+              0.9739999771118164
+            ],
+            "confusion_matrix": [
+              [
+                0,
+                14,
+                199,
+                28,
+                28,
+                4,
+                7,
+                16,
+                137,
+                67
+              ],
+              [
+                0,
+                488,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                2,
+                10
+              ],
+              [
+                0,
+                1,
+                460,
+                13,
+                11,
+                3,
+                7,
+                1,
+                2,
+                2
+              ],
+              [
+                0,
+                0,
+                5,
+                446,
+                6,
+                34,
+                4,
+                5,
+                0,
+                0
+              ],
+              [
+                0,
+                0,
+                9,
+                10,
+                473,
+                3,
+                2,
+                3,
+                0,
+                0
+              ],
+              [
+                0,
+                0,
+                4,
+                32,
+                8,
+                447,
+                1,
+                6,
+                1,
+                1
+              ],
+              [
+                0,
+                0,
+                8,
+                6,
+                2,
+                4,
+                479,
+                1,
+                0,
+                0
+              ],
+              [
+                0,
+                0,
+                5,
+                8,
+                4,
+                10,
+                0,
+                472,
+                0,
+                1
+              ],
+              [
+                0,
+                1,
+                2,
+                1,
+                2,
+                0,
+                1,
+                0,
+                492,
+                1
+              ],
+              [
+                0,
+                8,
+                1,
+                0,
+                0,
+                0,
+                1,
+                0,
+                3,
+                487
+              ]
+            ]
+          },
+          "trace": []
+        }
+      },
+      "diagnostics": {
+        "unlearned": {
+          "algorithm": "beam",
+          "stop_reason": "no_acceptable_extensions",
+          "depth_reached": 4,
+          "selected_bits": 4,
+          "elapsed_seconds": 34.873267864999434,
+          "candidate_evals": 256,
+          "screen_evals": 248,
+          "full_validations": 25,
+          "search_incomplete": false
+        },
+        "retrained": {
+          "algorithm": "beam",
+          "stop_reason": "full_validation_limit",
+          "depth_reached": 8,
+          "selected_bits": 0,
+          "elapsed_seconds": 60.34651106799993,
+          "candidate_evals": 480,
+          "screen_evals": 305,
+          "full_validations": 48,
+          "search_incomplete": true
+        }
+      },
+      "evaluation_split": "selection"
+    },
+    {
+      "configuration": "cached-bit-change",
+      "source": "runs/resnet18-seed0-class0-20261105-021912/campaign-fast-20261105-114258-cached-bit-change",
+      "status": "complete",
+      "config": {
+        "stage": "search",
+        "root": "/home/lorenzo/Projects/MURFI/runs/resnet18-seed0-class0-20261105-021912",
+        "data": "data",
+        "device": "cuda:1",
+        "seed": 0,
+        "forget_class": 0,
+        "epochs": 100,
+        "unlearn_epochs": 15,
+        "unlearn_lr": 0.001,
+        "batch_size": 128,
+        "workers": 0,
+        "budget": 64,
+        "random_trials": 20,
+        "candidate_weights": 1024,
+        "candidate_tests": 32,
+        "probe_per_class": 32,
+        "exclude_head": false,
+        "retain_drop": 0.02,
+        "fpr_rise": 0.01,
+        "threads": 4,
+        "algorithm": "beam",
+        "beam_width": 2,
+        "branch_factor": 2,
+        "forget_weight": 1.0,
+        "validation_only": true,
+        "search_name": "campaign-fast-20261105-114258-cached-bit-change",
+        "cache_eval": true,
+        "ranking": "bit-change",
+        "screen_per_class": 32,
+        "screen_slack": 0.02,
+        "validation_candidates": 4,
+        "max_candidate_evals": 512,
+        "max_full_validations": 48,
+        "max_search_seconds": 180.0
+      },
+      "selected": {
+        "unlearned": {
+          "bits": 5,
+          "validation": {
+            "valid": true,
+            "forget_accuracy": 0.2939999997615814,
+            "retain_accuracy": 0.9342222213745117,
+            "forget_precision": 0.7696335078534031,
+            "forget_false_positive_rate": 0.009777777777777778,
+            "per_class_accuracy": [
+              0.2939999997615814,
+              0.972000002861023,
+              0.9620000123977661,
+              0.8500000238418579,
+              0.9240000247955322,
+              0.8679999709129333,
+              0.9440000057220459,
+              0.9539999961853027,
+              0.9800000190734863,
+              0.9539999961853027
+            ],
+            "confusion_matrix": [
+              [
+                147,
+                0,
+                133,
+                2,
+                1,
+                0,
+                1,
+                0,
+                216,
+                0
+              ],
+              [
+                2,
+                486,
+                1,
+                0,
+                0,
+                0,
+                0,
+                0,
+                6,
+                5
+              ],
+              [
+                7,
+                0,
+                481,
+                1,
+                3,
+                3,
+                2,
+                1,
+                2,
+                0
+              ],
+              [
+                6,
+                0,
+                27,
+                425,
+                8,
+                22,
+                4,
+                4,
+                3,
+                1
+              ],
+              [
+                6,
+                0,
+                16,
+                2,
+                462,
+                2,
+                2,
+                6,
+                3,
+                1
+              ],
+              [
+                4,
+                0,
+                10,
+                26,
+                11,
+                434,
+                3,
+                11,
+                1,
+                0
+              ],
+              [
+                3,
+                0,
+                12,
+                5,
+                3,
+                2,
+                472,
+                1,
+                2,
+                0
+              ],
+              [
+                1,
+                0,
+                9,
+                2,
+                5,
+                5,
+                0,
+                477,
+                1,
+                0
+              ],
+              [
+                6,
+                2,
+                2,
+                0,
+                0,
+                0,
+                0,
+                0,
+                490,
+                0
+              ],
+              [
+                9,
+                6,
+                3,
+                0,
+                0,
+                0,
+                0,
+                0,
+                5,
+                477
+              ]
+            ]
+          },
+          "trace": [
+            {
+              "parameter": "layer4.0.downsample.0.weight",
+              "index": 34565,
+              "bit": 26,
+              "before": 0.007297367788851261,
+              "after": 1.8681261539459229,
+              "probe_objective": 4.904567718505859
+            },
+            {
+              "parameter": "layer4.1.conv1.weight",
+              "index": 2042560,
+              "bit": 26,
+              "before": 0.0022091935388743877,
+              "after": 0.5655535459518433,
+              "probe_objective": 3.8723556995391846
+            },
+            {
+              "parameter": "layer4.1.conv2.weight",
+              "index": 884122,
+              "bit": 26,
+              "before": 0.001326313242316246,
+              "after": 0.339536190032959,
+              "probe_objective": 3.0606226921081543
+            },
+            {
+              "parameter": "layer4.1.conv1.weight",
+              "index": 2041496,
+              "bit": 26,
+              "before": 0.0029895957559347153,
+              "after": 0.7653365135192871,
+              "probe_objective": 2.510981321334839
+            },
+            {
+              "parameter": "fc.weight",
+              "index": 1215,
+              "bit": 28,
+              "before": 0.21519728004932404,
+              "after": 5.010452122644615e-11,
+              "probe_objective": 1.8728001117706299
+            }
+          ]
+        },
+        "retrained": {
+          "bits": 0,
+          "validation": {
+            "valid": true,
+            "forget_accuracy": 0.0,
+            "retain_accuracy": 0.9431111812591553,
+            "forget_precision": 0.0,
+            "forget_false_positive_rate": 0.0,
+            "per_class_accuracy": [
+              0.0,
+              0.9760000109672546,
+              0.9200000166893005,
+              0.8920000195503235,
+              0.9459999799728394,
+              0.8939999938011169,
+              0.9580000042915344,
+              0.9440000057220459,
+              0.984000027179718,
+              0.9739999771118164
+            ],
+            "confusion_matrix": [
+              [
+                0,
+                14,
+                199,
+                28,
+                28,
+                4,
+                7,
+                16,
+                137,
+                67
+              ],
+              [
+                0,
+                488,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                2,
+                10
+              ],
+              [
+                0,
+                1,
+                460,
+                13,
+                11,
+                3,
+                7,
+                1,
+                2,
+                2
+              ],
+              [
+                0,
+                0,
+                5,
+                446,
+                6,
+                34,
+                4,
+                5,
+                0,
+                0
+              ],
+              [
+                0,
+                0,
+                9,
+                10,
+                473,
+                3,
+                2,
+                3,
+                0,
+                0
+              ],
+              [
+                0,
+                0,
+                4,
+                32,
+                8,
+                447,
+                1,
+                6,
+                1,
+                1
+              ],
+              [
+                0,
+                0,
+                8,
+                6,
+                2,
+                4,
+                479,
+                1,
+                0,
+                0
+              ],
+              [
+                0,
+                0,
+                5,
+                8,
+                4,
+                10,
+                0,
+                472,
+                0,
+                1
+              ],
+              [
+                0,
+                1,
+                2,
+                1,
+                2,
+                0,
+                1,
+                0,
+                492,
+                1
+              ],
+              [
+                0,
+                8,
+                1,
+                0,
+                0,
+                0,
+                1,
+                0,
+                3,
+                487
+              ]
+            ]
+          },
+          "trace": []
+        }
+      },
+      "diagnostics": {
+        "unlearned": {
+          "algorithm": "beam",
+          "stop_reason": "no_acceptable_extensions",
+          "depth_reached": 5,
+          "selected_bits": 5,
+          "elapsed_seconds": 50.99183447199994,
+          "candidate_evals": 288,
+          "screen_evals": 285,
+          "full_validations": 29,
+          "search_incomplete": false
+        },
+        "retrained": {
+          "algorithm": "beam",
+          "stop_reason": "no_acceptable_extensions",
+          "depth_reached": 3,
+          "selected_bits": 0,
+          "elapsed_seconds": 38.245483083999716,
+          "candidate_evals": 224,
+          "screen_evals": 172,
+          "full_validations": 24,
+          "search_incomplete": false
+        }
+      },
+      "evaluation_split": "selection"
+    },
+    {
+      "configuration": "wide-bit-change",
+      "source": "runs/resnet18-seed0-class0-20261105-021912/campaign-wide-20261105-114839-wide-bit-change",
+      "status": "complete",
+      "config": {
+        "stage": "search",
+        "root": "/home/lorenzo/Projects/MURFI/runs/resnet18-seed0-class0-20261105-021912",
+        "data": "data",
+        "device": "cuda:1",
+        "seed": 0,
+        "forget_class": 0,
+        "epochs": 100,
+        "unlearn_epochs": 15,
+        "unlearn_lr": 0.001,
+        "batch_size": 128,
+        "workers": 0,
+        "budget": 128,
+        "random_trials": 20,
+        "candidate_weights": 2048,
+        "candidate_tests": 64,
+        "probe_per_class": 32,
+        "exclude_head": false,
+        "retain_drop": 0.02,
+        "fpr_rise": 0.01,
+        "threads": 4,
+        "algorithm": "beam",
+        "beam_width": 4,
+        "branch_factor": 3,
+        "forget_weight": 1.0,
+        "validation_only": true,
+        "search_name": "campaign-wide-20261105-114839-wide-bit-change",
+        "cache_eval": true,
+        "ranking": "bit-change",
+        "screen_per_class": 32,
+        "screen_slack": 0.02,
+        "validation_candidates": 8,
+        "max_candidate_evals": 1280,
+        "max_full_validations": 96,
+        "max_search_seconds": 180.0
+      },
+      "selected": {
+        "unlearned": {
+          "bits": 3,
+          "validation": {
+            "valid": true,
+            "forget_accuracy": 0.06800000369548798,
+            "retain_accuracy": 0.939111053943634,
+            "forget_precision": 0.4358974358974359,
+            "forget_false_positive_rate": 0.009777777777777778,
+            "per_class_accuracy": [
+              0.06800000369548798,
+              0.9679999947547913,
+              0.9679999947547913,
+              0.8640000224113464,
+              0.9200000166893005,
+              0.8679999709129333,
+              0.9480000138282776,
+              0.9639999866485596,
+              0.9860000014305115,
+              0.9660000205039978
+            ],
+            "confusion_matrix": [
+              [
+                34,
+                2,
+                207,
+                4,
+                3,
+                0,
+                1,
+                7,
+                237,
+                5
+              ],
+              [
+                1,
+                484,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                8,
+                7
+              ],
+              [
+                4,
+                0,
+                484,
+                1,
+                3,
+                2,
+                3,
+                1,
+                2,
+                0
+              ],
+              [
+                7,
+                0,
+                19,
+                432,
+                8,
+                19,
+                4,
+                6,
+                4,
+                1
+              ],
+              [
+                13,
+                0,
+                11,
+                2,
+                460,
+                2,
+                2,
+                7,
+                2,
+                1
+              ],
+              [
+                4,
+                0,
+                10,
+                26,
+                10,
+                434,
+                4,
+                11,
+                1,
+                0
+              ],
+              [
+                4,
+                0,
+                8,
+                6,
+                2,
+                2,
+                474,
+                1,
+                3,
+                0
+              ],
+              [
+                2,
+                0,
+                7,
+                2,
+                2,
+                4,
+                0,
+                482,
+                1,
+                0
+              ],
+              [
+                4,
+                2,
+                1,
+                0,
+                0,
+                0,
+                0,
+                0,
+                493,
+                0
+              ],
+              [
+                5,
+                5,
+                2,
+                0,
+                0,
+                0,
+                0,
+                0,
+                5,
+                483
+              ]
+            ]
+          },
+          "trace": [
+            {
+              "parameter": "layer4.0.downsample.0.weight",
+              "index": 34565,
+              "bit": 26,
+              "before": 0.007297367788851261,
+              "after": 1.8681261539459229,
+              "probe_objective": 4.904567718505859
+            },
+            {
+              "parameter": "layer4.1.conv1.weight",
+              "index": 1922752,
+              "bit": 26,
+              "before": 0.002229664009064436,
+              "after": 0.5707939863204956,
+              "probe_objective": 3.7312161922454834
+            },
+            {
+              "parameter": "fc.weight",
+              "index": 482,
+              "bit": 25,
+              "before": 0.1083725169301033,
+              "after": 1.7339602708816528,
+              "probe_objective": 3.0364346504211426
+            }
+          ]
+        },
+        "retrained": {
+          "bits": 0,
+          "validation": {
+            "valid": true,
+            "forget_accuracy": 0.0,
+            "retain_accuracy": 0.9431111812591553,
+            "forget_precision": 0.0,
+            "forget_false_positive_rate": 0.0,
+            "per_class_accuracy": [
+              0.0,
+              0.9760000109672546,
+              0.9200000166893005,
+              0.8920000195503235,
+              0.9459999799728394,
+              0.8939999938011169,
+              0.9580000042915344,
+              0.9440000057220459,
+              0.984000027179718,
+              0.9739999771118164
+            ],
+            "confusion_matrix": [
+              [
+                0,
+                14,
+                199,
+                28,
+                28,
+                4,
+                7,
+                16,
+                137,
+                67
+              ],
+              [
+                0,
+                488,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                2,
+                10
+              ],
+              [
+                0,
+                1,
+                460,
+                13,
+                11,
+                3,
+                7,
+                1,
+                2,
+                2
+              ],
+              [
+                0,
+                0,
+                5,
+                446,
+                6,
+                34,
+                4,
+                5,
+                0,
+                0
+              ],
+              [
+                0,
+                0,
+                9,
+                10,
+                473,
+                3,
+                2,
+                3,
+                0,
+                0
+              ],
+              [
+                0,
+                0,
+                4,
+                32,
+                8,
+                447,
+                1,
+                6,
+                1,
+                1
+              ],
+              [
+                0,
+                0,
+                8,
+                6,
+                2,
+                4,
+                479,
+                1,
+                0,
+                0
+              ],
+              [
+                0,
+                0,
+                5,
+                8,
+                4,
+                10,
+                0,
+                472,
+                0,
+                1
+              ],
+              [
+                0,
+                1,
+                2,
+                1,
+                2,
+                0,
+                1,
+                0,
+                492,
+                1
+              ],
+              [
+                0,
+                8,
+                1,
+                0,
+                0,
+                0,
+                1,
+                0,
+                3,
+                487
+              ]
+            ]
+          },
+          "trace": []
+        }
+      },
+      "diagnostics": {
+        "unlearned": {
+          "algorithm": "beam",
+          "stop_reason": "no_acceptable_extensions",
+          "depth_reached": 3,
+          "selected_bits": 3,
+          "elapsed_seconds": 127.90917795000041,
+          "candidate_evals": 768,
+          "screen_evals": 767,
+          "full_validations": 71,
+          "search_incomplete": false
+        },
+        "retrained": {
+          "algorithm": "beam",
+          "stop_reason": "full_validation_limit",
+          "depth_reached": 6,
+          "selected_bits": 0,
+          "elapsed_seconds": 164.52347766000003,
+          "candidate_evals": 1088,
+          "screen_evals": 805,
+          "full_validations": 96,
+          "search_incomplete": true
+        }
+      },
+      "evaluation_split": "selection"
+    },
+    {
+      "configuration": "wide-bit-change-nohead",
+      "source": "runs/resnet18-seed0-class0-20261105-021912/campaign-wide-20261105-114839-wide-bit-change-nohead",
+      "status": "complete",
+      "config": {
+        "stage": "search",
+        "root": "/home/lorenzo/Projects/MURFI/runs/resnet18-seed0-class0-20261105-021912",
+        "data": "data",
+        "device": "cuda:0",
+        "seed": 0,
+        "forget_class": 0,
+        "epochs": 100,
+        "unlearn_epochs": 15,
+        "unlearn_lr": 0.001,
+        "batch_size": 128,
+        "workers": 0,
+        "budget": 128,
+        "random_trials": 20,
+        "candidate_weights": 2048,
+        "candidate_tests": 64,
+        "probe_per_class": 32,
+        "exclude_head": true,
+        "retain_drop": 0.02,
+        "fpr_rise": 0.01,
+        "threads": 4,
+        "algorithm": "beam",
+        "beam_width": 4,
+        "branch_factor": 3,
+        "forget_weight": 1.0,
+        "validation_only": true,
+        "search_name": "campaign-wide-20261105-114839-wide-bit-change-nohead",
+        "cache_eval": true,
+        "ranking": "bit-change",
+        "screen_per_class": 32,
+        "screen_slack": 0.02,
+        "validation_candidates": 8,
+        "max_candidate_evals": 1280,
+        "max_full_validations": 96,
+        "max_search_seconds": 180.0
+      },
+      "selected": {
+        "unlearned": {
+          "bits": 5,
+          "validation": {
+            "valid": true,
+            "forget_accuracy": 0.3540000021457672,
+            "retain_accuracy": 0.9351111650466919,
+            "forget_precision": 0.815668202764977,
+            "forget_false_positive_rate": 0.008888888888888889,
+            "per_class_accuracy": [
+              0.3540000021457672,
+              0.9819999933242798,
+              0.9580000042915344,
+              0.8019999861717224,
+              0.9380000233650208,
+              0.8640000224113464,
+              0.9599999785423279,
+              0.9660000205039978,
+              0.9800000190734863,
+              0.9660000205039978
+            ],
+            "confusion_matrix": [
+              [
+                177,
+                55,
+                217,
+                1,
+                7,
+                0,
+                2,
+                13,
+                16,
+                12
+              ],
+              [
+                0,
+                491,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                3,
+                6
+              ],
+              [
+                5,
+                0,
+                479,
+                1,
+                6,
+                1,
+                5,
+                1,
+                2,
+                0
+              ],
+              [
+                18,
+                2,
+                24,
+                401,
+                11,
+                24,
+                5,
+                8,
+                5,
+                2
+              ],
+              [
+                1,
+                0,
+                14,
+                1,
+                469,
+                2,
+                2,
+                10,
+                0,
+                1
+              ],
+              [
+                3,
+                1,
+                11,
+                21,
+                11,
+                432,
+                5,
+                13,
+                2,
+                1
+              ],
+              [
+                1,
+                0,
+                9,
+                3,
+                3,
+                2,
+                480,
+                1,
+                1,
+                0
+              ],
+              [
+                2,
+                0,
+                5,
+                2,
+                4,
+                4,
+                0,
+                483,
+                0,
+                0
+              ],
+              [
+                6,
+                2,
+                1,
+                0,
+                0,
+                0,
+                0,
+                0,
+                490,
+                1
+              ],
+              [
+                4,
+                7,
+                3,
+                0,
+                0,
+                0,
+                0,
+                0,
+                3,
+                483
+              ]
+            ]
+          },
+          "trace": [
+            {
+              "parameter": "layer4.0.downsample.0.weight",
+              "index": 34565,
+              "bit": 26,
+              "before": 0.007297367788851261,
+              "after": 1.8681261539459229,
+              "probe_objective": 4.904568672180176
+            },
+            {
+              "parameter": "layer4.1.conv1.weight",
+              "index": 1894035,
+              "bit": 26,
+              "before": 0.003282292280346155,
+              "after": 0.8402668237686157,
+              "probe_objective": 3.6408166885375977
+            },
+            {
+              "parameter": "layer4.1.conv1.weight",
+              "index": 2351300,
+              "bit": 26,
+              "before": 0.003050735453143716,
+              "after": 0.7809882760047913,
+              "probe_objective": 2.931898593902588
+            },
+            {
+              "parameter": "layer3.1.conv2.weight",
+              "index": 11592,
+              "bit": 26,
+              "before": 0.0041534071788191795,
+              "after": 1.06327223777771,
+              "probe_objective": 2.2465410232543945
+            },
+            {
+              "parameter": "layer4.1.conv1.weight",
+              "index": 175255,
+              "bit": 26,
+              "before": -0.002287945244461298,
+              "after": -0.5857139825820923,
+              "probe_objective": 2.0389230251312256
+            }
+          ]
+        },
+        "retrained": {
+          "bits": 0,
+          "validation": {
+            "valid": true,
+            "forget_accuracy": 0.0,
+            "retain_accuracy": 0.9431111812591553,
+            "forget_precision": 0.0,
+            "forget_false_positive_rate": 0.0,
+            "per_class_accuracy": [
+              0.0,
+              0.9760000109672546,
+              0.9200000166893005,
+              0.8920000195503235,
+              0.9459999799728394,
+              0.8939999938011169,
+              0.9580000042915344,
+              0.9440000057220459,
+              0.984000027179718,
+              0.9739999771118164
+            ],
+            "confusion_matrix": [
+              [
+                0,
+                14,
+                199,
+                28,
+                28,
+                4,
+                7,
+                16,
+                137,
+                67
+              ],
+              [
+                0,
+                488,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                2,
+                10
+              ],
+              [
+                0,
+                1,
+                460,
+                13,
+                11,
+                3,
+                7,
+                1,
+                2,
+                2
+              ],
+              [
+                0,
+                0,
+                5,
+                446,
+                6,
+                34,
+                4,
+                5,
+                0,
+                0
+              ],
+              [
+                0,
+                0,
+                9,
+                10,
+                473,
+                3,
+                2,
+                3,
+                0,
+                0
+              ],
+              [
+                0,
+                0,
+                4,
+                32,
+                8,
+                447,
+                1,
+                6,
+                1,
+                1
+              ],
+              [
+                0,
+                0,
+                8,
+                6,
+                2,
+                4,
+                479,
+                1,
+                0,
+                0
+              ],
+              [
+                0,
+                0,
+                5,
+                8,
+                4,
+                10,
+                0,
+                472,
+                0,
+                1
+              ],
+              [
+                0,
+                1,
+                2,
+                1,
+                2,
+                0,
+                1,
+                0,
+                492,
+                1
+              ],
+              [
+                0,
+                8,
+                1,
+                0,
+                0,
+                0,
+                1,
+                0,
+                3,
+                487
+              ]
+            ]
+          },
+          "trace": []
+        }
+      },
+      "diagnostics": {
+        "unlearned": {
+          "algorithm": "beam",
+          "stop_reason": "full_validation_limit",
+          "depth_reached": 5,
+          "selected_bits": 5,
+          "elapsed_seconds": 138.8142177890004,
+          "candidate_evals": 1088,
+          "screen_evals": 1083,
+          "full_validations": 96,
+          "search_incomplete": true
+        },
+        "retrained": {
+          "algorithm": "beam",
+          "stop_reason": "no_acceptable_extensions",
+          "depth_reached": 4,
+          "selected_bits": 0,
+          "elapsed_seconds": 107.45921093000015,
+          "candidate_evals": 832,
+          "screen_evals": 568,
+          "full_validations": 94,
+          "search_incomplete": false
+        }
+      },
+      "evaluation_split": "selection"
+    }
+  ],
+  "notes": "Stopped or never-started configurations are retained; validation values are not test results. Diagnostics were added after the initial run."
+}

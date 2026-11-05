@@ -1,4 +1,24 @@
-# Validation performed before handoff
+# Validation record
+
+## Desktop GPU update, 2026-11-05
+
+- Existing `.venv` validated on Linux with Python 3.12.14, PyTorch
+  2.15.0+cu132, torchvision 0.29.2+cu132 and both RTX 3070 Ti / RTX 5060 Ti.
+- CPU and both CUDA synthetic smoke runs completed successfully.
+- CIFAR-10 training, unlearning, retraining and targeted/random fault searches
+  completed for seed 0. Frozen-test results are in the
+  [ResNet report](reports/resnet/RESULTS.md); seed-1/2 replication is pending.
+- All 14 tests passed after adding beam search, exact bit-change ranking,
+  cached evaluation, capped screening and frozen checkpoint evaluation.
+- Frozen-evaluation checks verify selected-state and validation-file hashes
+  remain unchanged, no search is rerun, and a second test evaluation is refused.
+- Third-party checkpoint import, published-MU reproduction, LLM experiments
+  and physical fault injection remain unperformed.
+
+## Historical laptop handoff, 2026-11-04
+
+The limitations below describe the laptop handoff only; the desktop update
+above supersedes its unperformed CUDA/CIFAR items.
 
 Date: 2026-11-04.
 

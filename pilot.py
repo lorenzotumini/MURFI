@@ -4,6 +4,7 @@ Only modifies owned model tensors in software; no physical fault injection.
 """
 import argparse
 import copy
+import hashlib
 import json
 import math
 from pathlib import Path
@@ -26,6 +27,41 @@ def write_json(path, obj):
     Path(path).write_text(json.dumps(obj, indent=2, allow_nan=False), encoding='utf-8')
 
 
+def select_beam(nodes, width):
+    """Keep distinct bit sets, preferring recall then discovery loss."""
+    ordered = sorted(nodes, key=lambda n: (-n['validation']['forget_accuracy'],
+                                           n['objective'],
+                                           -n['validation']['retain_accuracy']))
+    selected, seen = [], set()
+    for node in ordered:
+        bits = frozenset((t['parameter'], t['index'], t['bit']) for t in node['trace'])
+        if bits not in seen:
+            selected.append(node)
+            seen.add(bits)
+        if len(selected) == width:
+            break
+    return selected
+
+
+def bit_change_scores(weights, gradients, limit):
+    """Largest beneficial first-order change from a valid FP32 storage flip."""
+    import torch
+    w, g = weights.detach().flatten(), gradients.detach().flatten()
+    scores = torch.zeros_like(w)
+    words = w.contiguous().view(torch.int32)
+    for bit in range(32):
+        mask = (1 << bit) if bit < 31 else -(1 << 31)
+        changed = words.bitwise_xor(mask).view(torch.float32)
+        benefit = -g * (changed - w)
+        valid = torch.isfinite(changed) & (changed.abs() <= limit)
+        scores = torch.maximum(scores, torch.where(valid, benefit, 0.0))
+    return scores
+
+
+def cached_batches(dl, device):
+    return [(x.to(device), y.to(device)) for x, y in dl]
+
+
 def main():
     import torch
     from torch import nn
@@ -35,7 +71,8 @@ def main():
     from torchvision import datasets, transforms
 
     p = argparse.ArgumentParser(description=__doc__)
-    p.add_argument('--stage', choices=['train', 'search', 'all', 'smoke'], default='all')
+    p.add_argument('--stage', choices=['train', 'retrain', 'search', 'evaluate', 'all', 'smoke'], default='all',
+                   help='retrain reuses completed original/unlearned checkpoints, restarts retraining, then searches')
     p.add_argument('--root', type=Path, default=Path('runs/seed0-class0'))
     p.add_argument('--data', type=Path, default=Path('data'))
     p.add_argument('--device', default='cuda:0' if torch.cuda.is_available() else 'cpu')
@@ -55,10 +92,49 @@ def main():
     p.add_argument('--retain-drop', type=float, default=0.02)
     p.add_argument('--fpr-rise', type=float, default=0.01)
     p.add_argument('--threads', type=int, default=4)
+    p.add_argument('--algorithm', choices=['greedy', 'beam'], default='greedy')
+    p.add_argument('--beam-width', type=int, default=3)
+    p.add_argument('--branch-factor', type=int, default=3)
+    p.add_argument('--forget-weight', type=float, default=1.0)
+    p.add_argument('--validation-only', action='store_true',
+                   help='Evaluate on selection data; do not open the official test split')
+    p.add_argument('--search-name', help='Unique output subdirectory within the run root')
+    p.add_argument('--cache-eval', action='store_true')
+    p.add_argument('--ranking', choices=['magnitude', 'bit-change'], default='magnitude')
+    p.add_argument('--screen-per-class', type=int, default=0,
+                   help='Use additional discovery examples for cheap utility screening')
+    p.add_argument('--screen-slack', type=float, default=0.02)
+    p.add_argument('--validation-candidates', type=int, default=0,
+                   help='Maximum full validations per expansion; zero means unlimited')
+    p.add_argument('--max-candidate-evals', type=int, default=0)
+    p.add_argument('--max-full-validations', type=int, default=0)
+    p.add_argument('--max-search-seconds', type=float, default=0)
     a = p.parse_args()
+    frozen_config = None
+    if a.stage == 'evaluate':
+        if not a.search_name or Path(a.search_name).name != a.search_name or a.search_name in ['.', '..']:
+            p.error('--stage evaluate requires the existing --search-name directory.')
+        frozen_config = json.loads((a.root / a.search_name / 'config.json').read_text())
+        if frozen_config['seed'] != a.seed or frozen_config['forget_class'] != a.forget_class:
+            p.error('Frozen search seed/class differs from the requested evaluation.')
+        a.exclude_head = frozen_config['exclude_head']
+        a.random_trials = frozen_config['random_trials']
+        a.validation_only = False
+    synthetic = a.stage == 'smoke' or (frozen_config is not None and frozen_config['stage'] == 'smoke')
     if min(a.epochs, a.unlearn_epochs, a.batch_size, a.candidate_weights,
-           a.candidate_tests, a.probe_per_class, a.random_trials, a.budget) < 1:
+           a.candidate_tests, a.probe_per_class, a.random_trials, a.budget,
+           a.beam_width, a.branch_factor) < 1:
         p.error('Epoch counts, sizes, trials and budget must be positive.')
+    if not math.isfinite(a.forget_weight) or a.forget_weight <= 0:
+        p.error('--forget-weight must be finite and positive.')
+    if min(a.screen_per_class, a.validation_candidates, a.max_candidate_evals,
+           a.max_full_validations, a.max_search_seconds, a.screen_slack) < 0:
+        p.error('Screen sizes, evaluation limits, time limits and slack cannot be negative.')
+    if not all(math.isfinite(x) for x in [a.max_search_seconds, a.screen_slack]):
+        p.error('Time limit and screen slack must be finite.')
+    if a.search_name is not None and (Path(a.search_name).name != a.search_name
+                                      or a.search_name in ['', '.', '..']):
+        p.error('--search-name must be a single directory name.')
     if a.stage == 'smoke':
         a.epochs = a.unlearn_epochs = 1
         a.budget = 2
@@ -79,7 +155,7 @@ def main():
         torch.cuda.manual_seed_all(a.seed)
 
     def model_new():
-        if a.stage == 'smoke':
+        if synthetic:
             return nn.Sequential(nn.Flatten(), nn.Linear(3 * 32 * 32, 10)).to(device)
         m = torchvision.models.resnet18(weights=None, num_classes=10)
         m.conv1 = nn.Conv2d(3, 64, 3, stride=1, padding=1, bias=False)
@@ -104,7 +180,7 @@ def main():
                 y = (y + int(torch.randint(1, 10, ()).item())) % 10
             return x, y
 
-    if a.stage == 'smoke':
+    if synthetic:
         class Toy(Dataset):
             def __init__(self, n, seed):
                 g = torch.Generator().manual_seed(seed)
@@ -147,21 +223,34 @@ def main():
     xb, yb = zip(*(eval_ds[i] for i in probe_ids))
     xb, yb = torch.stack(xb).to(device), torch.tensor(yb, device=device)
     forget_mask = yb == a.forget_class
+    if a.cache_eval:
+        select_loader = cached_batches(select_loader, device)
+    screen_loader = None
+    if a.screen_per_class:
+        screen_ids = []
+        for c in range(10):
+            available = [i for i in search_ids if eval_ds.targets[i] == c and i not in probe_ids]
+            # Tiny synthetic smoke sets have no extra discovery examples.
+            if not available and a.stage == 'smoke':
+                available = [i for i in search_ids if eval_ds.targets[i] == c]
+            if len(available) < a.screen_per_class and a.stage != 'smoke':
+                p.error('Not enough discovery examples for the requested independent screening subset.')
+            screen_ids.extend(available[:a.screen_per_class])
+        screen_loader = cached_batches(loader(Subset(eval_ds, screen_ids)), device)
 
     @torch.no_grad()
     def metrics(m, dl):
         m.eval()
-        cm = torch.zeros(10, 10, dtype=torch.int64)
-        invalid = False
+        cm = torch.zeros(10, 10, dtype=torch.int64, device=device)
+        valid = torch.ones((), dtype=torch.bool, device=device)
         for x, y in dl:
             z = m(x.to(device))
-            if not torch.isfinite(z).all():
-                invalid = True
-                break
-            pred = z.argmax(1).cpu()
-            cm += torch.bincount(y * 10 + pred, minlength=100).reshape(10, 10)
-        if invalid:
+            valid &= torch.isfinite(z).all()
+            pred = z.argmax(1)
+            cm += torch.bincount(y.to(device) * 10 + pred, minlength=100).reshape(10, 10)
+        if not bool(valid):
             return {'valid': False}
+        cm = cm.cpu()
         per = cm.diag().float() / cm.sum(1).clamp_min(1)
         c = a.forget_class
         tp = int(cm[c, c])
@@ -240,6 +329,35 @@ def main():
             else:
                 raise RuntimeError('No viable unlearning checkpoint: see unlearned-training.json. '
                                    'Adjust unlearning on validation only and use a new run directory.')
+    if a.stage == 'retrain':
+        saved_config = json.loads((a.root / 'train-config.json').read_text())
+        for key in ['seed', 'forget_class', 'epochs', 'batch_size']:
+            if saved_config[key] != getattr(a, key):
+                raise ValueError(f'Retraining configuration differs: {key}.')
+        saved_split = json.loads((a.root / 'split.json').read_text())
+        if saved_split != {'train': train_ids, 'search': search_ids, 'select': select_ids}:
+            raise ValueError('Saved split differs from reconstructed split.')
+        if (a.root / 'retrained-training.json').exists() or (a.root / 'search').exists() or (a.root / 'search-no-head').exists():
+            raise FileExistsError('Retraining or search already completed/started; use --stage search or a fresh run copy.')
+        for name, epochs in [('original', saved_config['epochs']),
+                             ('unlearned', saved_config['unlearn_epochs'])]:
+            if len(json.loads((a.root / (name + '-training.json')).read_text())) != epochs:
+                raise ValueError(f'{name} training is incomplete.')
+        m = model_new()
+        original = load_checkpoint(m, 'original')['validation']
+        unlearned = load_checkpoint(m, 'unlearned')['validation']
+        del m
+        if (not original['valid'] or not unlearned['valid']
+                or min(original['forget_accuracy'], original['retain_accuracy']) < 0.70
+                or unlearned['forget_accuracy'] > 0.10
+                or unlearned['retain_accuracy'] < original['retain_accuracy'] - 0.05):
+            raise ValueError('Saved checkpoints do not pass the training/unlearning gates.')
+        partial = a.root / 'retrained.pt'
+        if partial.exists():
+            partial.rename(a.root / f'retrained-interrupted-{time.time_ns()}.pt')
+        write_json(a.root / 'retrain-config.json', {k: str(v) if isinstance(v, Path) else v for k, v in vars(a).items()})
+
+    if a.stage in ['all', 'train', 'smoke', 'retrain']:
         # Same initialization seed, same 10-output architecture, no forgotten-class training examples.
         torch.manual_seed(a.seed)
         m = model_new()
@@ -252,16 +370,29 @@ def main():
         saved_split = json.loads((a.root / 'split.json').read_text(encoding='utf-8'))
         if saved_split != {'train': train_ids, 'search': search_ids, 'select': select_ids}:
             raise ValueError('Saved split differs from reconstructed split.')
-    search_dir = a.root / ('search-no-head' if a.exclude_head else 'search')
-    if (search_dir / 'config.json').exists():
+    search_dir = a.root / (a.search_name or ('search-no-head' if a.exclude_head else 'search'))
+    if a.stage == 'evaluate':
+        if (search_dir / 'frozen-test-manifest.json').exists():
+            raise FileExistsError('Frozen test evaluation already started; inspect its manifest/results.')
+        paths = [a.root / (n + '.pt') for n in ['original', 'unlearned', 'retrained']]
+        paths += [search_dir / (n + '-selected.pt') for n in ['unlearned', 'retrained']]
+        paths += [search_dir / 'config.json', a.root / 'split.json', Path(__file__)]
+        write_json(search_dir / 'frozen-test-manifest.json', {
+            'created_unix': time.time(), 'seed': a.seed, 'forget_class': a.forget_class,
+            'selection': 'Reuse selected checkpoints exactly; no search or selection during evaluation.',
+            'source_config': frozen_config,
+            'sha256': {str(path.resolve()): hashlib.sha256(path.read_bytes()).hexdigest() for path in paths},
+            'prior_test_results_in_run': (a.root / 'search' / 'results.json').exists()})
+    elif (search_dir / 'config.json').exists():
         raise FileExistsError('Search results exist; use a fresh run copy to change search settings.')
     search_dir.mkdir(parents=True, exist_ok=True)
-    write_json(search_dir / 'config.json', {k: str(v) if isinstance(v, Path) else v for k, v in vars(a).items()})
+    if a.stage != 'evaluate':
+        write_json(search_dir / 'config.json', {k: str(v) if isinstance(v, Path) else v for k, v in vars(a).items()})
     env = {'torch': torch.__version__, 'torchvision': torchvision.__version__,
            'python': platform.python_version(), 'cuda_runtime': torch.version.cuda,
            'device': str(device), 'gpu': torch.cuda.get_device_name(device) if device.type == 'cuda' else None,
-           'smoke_only': a.stage == 'smoke'}
-    write_json(search_dir / 'environment.json', env)
+           'smoke_only': synthetic}
+    write_json(search_dir / ('test-environment.json' if a.stage == 'evaluate' else 'environment.json'), env)
 
     def eligible(m):
         return [(n, v) for n, v in m.named_parameters()
@@ -275,7 +406,7 @@ def main():
 
     def objective(m):
         z = m(xb)
-        return (F.cross_entropy(z[forget_mask], yb[forget_mask]) +
+        return (a.forget_weight * F.cross_entropy(z[forget_mask], yb[forget_mask]) +
                 F.cross_entropy(z[~forget_mask], yb[~forget_mask]))
 
     def acceptable(met, base):
@@ -296,73 +427,168 @@ def main():
         if not all(torch.equal(expected[n], now[n]) for n in expected):
             raise AssertionError('Unexpected model mutation during fault search.')
 
-    def targeted(name):
-        m = model_new()
-        ck = load_checkpoint(m, name)
-        before = clone_state(m)
-        base = metrics(m, select_loader)
-        lim = limits(m)
-        params = dict(eligible(m))
-        used, trace, history = set(), [], [{'bits': 0, 'validation': base}]
-        best_state, best_trace, best_val = before, [], base
-        for step in range(a.budget):
-            m.eval()
-            m.zero_grad(set_to_none=True)
-            objective(m).backward()
-            pool = []
-            # Global ranking of scalar weights by sensitivity. No original weights are consulted.
-            for n, v in params.items():
-                g = v.grad.detach().flatten()
-                scores = g.abs() * v.detach().flatten().abs().clamp_min(1e-8)
-                _, inds = scores.topk(min(a.candidate_weights, v.numel()))
-                vals = v.detach().flatten()[inds].cpu().tolist()
-                grads = g[inds].cpu().tolist()
-                for i, w, grad in zip(inds.cpu().tolist(), vals, grads):
-                    pool.append((abs(grad) * max(abs(w), 1e-8), n, i, w, grad))
-            pool.sort(reverse=True)
-            candidates = []
-            for _, n, i, w, grad in pool[:a.candidate_weights]:
-                for bit in range(32):
-                    if (n, i, bit) in used:
-                        continue
-                    new = flipped_float(w, bit)
-                    if math.isfinite(new) and abs(new) <= lim[n]:
-                        predicted = grad * (new - w)
-                        if predicted < 0:
-                            candidates.append((predicted, n, i, bit, w))
-            candidates.sort()
-            # Measure candidate effects on the discovery split, then validate the shortlist.
-            with torch.no_grad():
-                current = float(objective(m))
-                measured = []
-                for _, n, i, bit, old in candidates[:a.candidate_tests]:
-                    apply_bit(params[n], i, bit)
-                    value = float(objective(m))
-                    apply_bit(params[n], i, bit)
-                    if math.isfinite(value) and value < current:
-                        measured.append((value, n, i, bit, old))
-                measured.sort()
-                accepted = None
+    def budget_reason(stats, candidate=False, full=False):
+        if a.max_search_seconds and time.monotonic() - stats['started'] >= a.max_search_seconds:
+            return 'time_limit'
+        if candidate and a.max_candidate_evals and stats['candidate_evals'] >= a.max_candidate_evals:
+            return 'candidate_evaluation_limit'
+        if full and a.max_full_validations and stats['full_validations'] >= a.max_full_validations:
+            return 'full_validation_limit'
+        return None
+
+    def extensions(m, params, lim, trace, base, screen_base, branches, stats):
+        reason = budget_reason(stats, candidate=True, full=True)
+        if reason:
+            stats['limit'] = reason
+            return []
+        used = {(t['parameter'], t['index'], t['bit']) for t in trace}
+        m.eval()
+        m.zero_grad(set_to_none=True)
+        objective(m).backward()
+        pool = []
+        # Global ranking of scalar weights by sensitivity. No original weights are consulted.
+        for n, v in params.items():
+            g = v.grad.detach().flatten()
+            scores = (bit_change_scores(v, g, lim[n]) if a.ranking == 'bit-change' else
+                      g.abs() * v.detach().flatten().abs().clamp_min(1e-8))
+            ranked, inds = scores.topk(min(a.candidate_weights, v.numel()))
+            vals = v.detach().flatten()[inds].cpu().tolist()
+            grads = g[inds].cpu().tolist()
+            for score, i, w, grad in zip(ranked.cpu().tolist(), inds.cpu().tolist(), vals, grads):
+                pool.append((score, n, i, w, grad))
+        pool.sort(reverse=True)
+        candidates = []
+        for _, n, i, w, grad in pool[:a.candidate_weights]:
+            for bit in range(32):
+                if (n, i, bit) in used:
+                    continue
+                new = flipped_float(w, bit)
+                if math.isfinite(new) and abs(new) <= lim[n]:
+                    predicted = grad * (new - w)
+                    if predicted < 0:
+                        candidates.append((predicted, n, i, bit, w))
+        candidates.sort()
+        # Measure candidate effects on the discovery split, then validate the shortlist.
+        with torch.no_grad():
+            current = float(objective(m))
+            measured = []
+            for _, n, i, bit, old in candidates[:a.candidate_tests]:
+                reason = budget_reason(stats, candidate=True)
+                if reason:
+                    stats['limit'] = reason
+                    break
+                apply_bit(params[n], i, bit)
+                value = float(objective(m))
+                apply_bit(params[n], i, bit)
+                stats['candidate_evals'] += 1
+                if math.isfinite(value) and value < current:
+                    measured.append((value, n, i, bit, old))
+            measured.sort()
+            if screen_loader is not None:
+                screened = []
                 for value, n, i, bit, old in measured:
-                    apply_bit(params[n], i, bit)
-                    val = metrics(m, select_loader)
-                    if acceptable(val, base):
-                        accepted = {'parameter': n, 'index': i, 'bit': bit, 'before': old,
-                                    'after': float(params[n].flatten()[i]), 'probe_objective': value}
+                    if budget_reason(stats):
+                        stats['limit'] = 'time_limit'
                         break
                     apply_bit(params[n], i, bit)
-            if accepted is None:
+                    screen = metrics(m, screen_loader)
+                    apply_bit(params[n], i, bit)
+                    stats['screen_evals'] += 1
+                    if (not screen['valid']
+                            or screen['retain_accuracy'] < screen_base['retain_accuracy'] - a.retain_drop - a.screen_slack
+                            or screen['forget_false_positive_rate'] > screen_base['forget_false_positive_rate'] + a.fpr_rise + a.screen_slack):
+                        continue
+                    utility = ((current - value) / max(abs(current), 1e-8)
+                               - max(0, screen_base['retain_accuracy'] - screen['retain_accuracy'])
+                               - max(0, screen['forget_false_positive_rate'] - screen_base['forget_false_positive_rate']))
+                    screened.append((-utility, value, n, i, bit, old))
+                measured = [item[1:] for item in sorted(screened)]
+            if a.validation_candidates:
+                measured = measured[:a.validation_candidates]
+            children = []
+            for value, n, i, bit, old in measured:
+                reason = budget_reason(stats, full=True)
+                if reason:
+                    stats['limit'] = reason
+                    break
+                apply_bit(params[n], i, bit)
+                val = metrics(m, select_loader)
+                stats['full_validations'] += 1
+                if acceptable(val, base):
+                    flip = {'parameter': n, 'index': i, 'bit': bit, 'before': old,
+                            'after': float(params[n].flatten()[i]), 'probe_objective': value}
+                    children.append({'trace': trace + [flip], 'validation': val,
+                                     'objective': value})
+                apply_bit(params[n], i, bit)
+                if len(children) >= branches:
+                    break
+        return children
+
+    def targeted(name):
+        m = model_new()
+        load_checkpoint(m, name)
+        before = clone_state(m)
+        base = metrics(m, select_loader)
+        screen_base = metrics(m, screen_loader) if screen_loader is not None else None
+        lim, params = limits(m), dict(eligible(m))
+        m.eval()
+        with torch.no_grad():
+            initial_objective = float(objective(m))
+        beam = [{'trace': [], 'validation': base, 'objective': initial_objective}]
+        history = [{'bits': 0, 'validation': base, 'objective': initial_objective}]
+        best_state, best_trace, best_val = before, [], base
+        width = a.beam_width if a.algorithm == 'beam' else 1
+        branches = a.branch_factor if a.algorithm == 'beam' else 1
+        stop_reason = 'budget_exhausted'
+        stats = {'started': time.monotonic(), 'candidate_evals': 0,
+                 'screen_evals': 0, 'full_validations': 0, 'limit': None}
+        for step in range(a.budget):
+            children = []
+            for parent in beam:
+                m.load_state_dict(before)
+                for flip in parent['trace']:
+                    apply_bit(params[flip['parameter']], flip['index'], flip['bit'])
+                children.extend(extensions(m, params, lim, parent['trace'], base, screen_base, branches, stats))
+                if stats['limit']:
+                    break
+            if not children:
+                stop_reason = (stats['limit'] or budget_reason(stats, candidate=True, full=True)
+                               or 'no_acceptable_extensions')
                 break
-            trace.append(accepted)
-            used.add((accepted['parameter'], accepted['index'], accepted['bit']))
-            history.append({'bits': len(trace), 'validation': val, 'flip': accepted})
-            # Select k using validation only; a smaller budget wins ties.
-            if val['forget_accuracy'] > best_val['forget_accuracy']:
-                best_state, best_trace, best_val = clone_state(m), copy.deepcopy(trace), val
-            print(f'{name} target bits={len(trace)} forget={val["forget_accuracy"]:.3f} '
-                  f'retain={val["retain_accuracy"]:.3f}', flush=True)
-        audit(before, m, trace)
+            beam = select_beam(children, width)
+            # Every acceptable child is considered for final selection, even if pruned.
+            for child in children:
+                if child['validation']['forget_accuracy'] > best_val['forget_accuracy']:
+                    best_trace = copy.deepcopy(child['trace'])
+                    best_val = child['validation']
+                    m.load_state_dict(before)
+                    for flip in best_trace:
+                        apply_bit(params[flip['parameter']], flip['index'], flip['bit'])
+                    audit(before, m, best_trace)
+                    best_state = clone_state(m)
+            leader = beam[0]
+            history.append({'bits': step + 1, 'validation': leader['validation'],
+                            'objective': leader['objective'], 'trace': leader['trace'],
+                            'beam_size': len(beam), 'acceptable_children': len(children),
+                            'elapsed_seconds': time.monotonic() - stats['started'],
+                            'candidate_evals': stats['candidate_evals'],
+                            'full_validations': stats['full_validations']})
+            write_json(search_dir / (name + '-search.json'), history)
+            print(f'{name} {a.algorithm} depth={step+1} beam={len(beam)} '
+                  f'best_bits={len(best_trace)} forget={best_val["forget_accuracy"]:.3f} '
+                  f'retain={best_val["retain_accuracy"]:.3f} '
+                  f'elapsed={time.monotonic()-stats["started"]:.1f}s', flush=True)
+            if stats['limit']:
+                stop_reason = stats['limit']
+                break
         write_json(search_dir / (name + '-search.json'), history)
+        write_json(search_dir / (name + '-diagnostics.json'), {
+            'algorithm': a.algorithm, 'stop_reason': stop_reason,
+            'depth_reached': len(history) - 1, 'selected_bits': len(best_trace),
+            'elapsed_seconds': time.monotonic() - stats['started'],
+            'candidate_evals': stats['candidate_evals'], 'screen_evals': stats['screen_evals'],
+            'full_validations': stats['full_validations'],
+            'search_incomplete': stop_reason.endswith('_limit')})
         m.load_state_dict(best_state)
         audit(before, m, best_trace)
         torch.save({'state': best_state, 'trace': best_trace, 'validation': best_val},
@@ -400,18 +626,38 @@ def main():
         audit(before, m, trace)
         return m, trace
 
-    unlearned, un_trace, un_val = targeted('unlearned')
-    retrained, rt_trace, rt_val = targeted('retrained')
+    def frozen_model(name):
+        m = model_new()
+        load_checkpoint(m, name)
+        before = clone_state(m)
+        ck = torch.load(search_dir / (name + '-selected.pt'), map_location='cpu', weights_only=True)
+        allowed = dict(eligible(m))
+        if any(t['parameter'] not in allowed for t in ck['trace']):
+            raise ValueError('Frozen trace violates the saved parameter eligibility.')
+        m.load_state_dict(ck['state'])
+        audit(before, m, ck['trace'])
+        return m, ck['trace'], ck['validation']
+
+    search_or_load = frozen_model if a.stage == 'evaluate' else targeted
+    unlearned, un_trace, un_val = search_or_load('unlearned')
+    retrained, rt_trace, rt_val = search_or_load('retrained')
     # Only now open the official test data. Search/selection above never see it.
-    if a.stage != 'smoke':
-        test_ds = datasets.CIFAR10(a.data, train=False, download=True, transform=plain)
-    test_loader = loader(test_ds)
-    result = {'environment': env, 'targeted': {}, 'baseline': {}, 'random': [],
+    if a.validation_only:
+        test_loader = select_loader
+    else:
+        if not synthetic:
+            test_ds = datasets.CIFAR10(a.data, train=False, download=True, transform=plain)
+        test_loader = loader(test_ds)
+        if a.cache_eval:
+            test_loader = cached_batches(test_loader, device)
+    evaluation_key = 'validation' if a.validation_only else 'test'
+    result = {'environment': env, 'evaluation_split': 'selection' if a.validation_only else 'test',
+              'targeted': {}, 'baseline': {}, 'random': [],
               'note': 'Software fault simulation; ideal arbitrary-address bit access. No physical feasibility claim.'}
     for name, m, trace, val in [('unlearned', unlearned, un_trace, un_val),
                                ('retrained', retrained, rt_trace, rt_val)]:
         result['targeted'][name] = {'bits': len(trace), 'validation': val,
-                                    'test': metrics(m, test_loader), 'trace': trace}
+                                    evaluation_key: metrics(m, test_loader), 'trace': trace}
     del unlearned, retrained
     for name in ['original', 'unlearned', 'retrained']:
         m = model_new()
@@ -422,10 +668,11 @@ def main():
     for trial in range(a.random_trials):
         m, trace = random_faults('unlearned', len(un_trace), trial)
         result['random'].append({'trial': trial, 'bits': len(trace),
-                                  'test': metrics(m, test_loader), 'trace': trace})
+                                  evaluation_key: metrics(m, test_loader), 'trace': trace})
         del m
-    write_json(search_dir / 'results.json', result)
-    print(f'Saved {search_dir / "results.json"}', flush=True)
+    output_path = search_dir / ('frozen-test-results.json' if a.stage == 'evaluate' else 'results.json')
+    write_json(output_path, result)
+    print(f'Saved {output_path}', flush=True)
 
 
 if __name__ == '__main__':

@@ -1,15 +1,16 @@
 # Unlearning e fault sui pesi: sintesi dei risultati
 
-Aggiornamento: **4 novembre 2026**. Questa sintesi raccoglie gli esperimenti e le
-valutazioni sviluppati nella chat. I dati sono esplorativi e riguardano piccoli
-classificatori; non abbiamo ancora eseguito in questa chat un esperimento
-scientifico su CIFAR-10, LLM o fault fisici sulle GPU.
+Aggiornamento: **5 novembre 2026**. Questa sintesi raccoglie gli esperimenti e le
+valutazioni sviluppati nella chat: classificatore digits e ResNet-18 su CIFAR-10.
+Il seed 0 di CIFAR-10 ha completato una valutazione test con checkpoint congelato;
+i seed 1 e 2 sono in training. Non abbiamo testato LLM o fault fisici sulle GPU.
 
 ## Risultati principali
 
 1. **Bit flip mirati possono ripristinare il riconoscimento di una classe
-   soppressa nel nostro modello sperimentale.** Il recupero resta elevato anche
-   impedendo modifiche al classificatore finale.
+   soppressa nei nostri classificatori sperimentali.** Anche escludendo il
+   classificatore finale, il risultato digits resta elevato e quello CIFAR-10
+   raggiunge il 34,2% sul test nel solo seed finora completato.
 2. **I fault casuali non hanno prodotto recuperi selettivi sostanziali nelle
    campagne eseguite.** Abbiamo osservato soprattutto predizioni invariate,
    altri cambiamenti e, con più fault, maggiore danno.
@@ -87,6 +88,40 @@ pochi bit non significano necessariamente piccole variazioni numeriche.
 
 Dettagli: [report dei fault mirati](reports/laptop/CPU_RESULTS.md) e
 [protocollo CPU](LAPTOP_EXPERIMENT.md).
+
+### Estensione CIFAR-10 / ResNet-18, seed 0
+
+Il modello usa la stessa semplice baseline di relabeling, non un metodo MU
+pubblicato riprodotto. Originale e controllo riaddestrato usano 100 epoche;
+la soppressione ne usa 15. Le classi rimaste sono nove e il target è airplane.
+
+| Valutazione sul test ufficiale | Recall airplane | Accuratezza classi mantenute | Falsi positivi airplane |
+|---|---:|---:|---:|
+| Originale | 95,40% | 94,28% | 0,57% |
+| Soppresso, prima dei fault | 0,00% | 94,57% | 0,00% |
+| Soppresso, cinque flip e head escluso | **34,20%** | **93,23%** | **0,86%** |
+| Controllo riaddestrato, checkpoint selezionato | 0,00% | 94,53% | 0,00% |
+
+Si tratta di **342 immagini airplane corrette su 1.000**, con perdita di
+accuratezza mantenuta di 1,33 punti: tutti i criteri prefissati passano sul test.
+Nessuno dei 20 trial random a cinque flip recupera airplane. Tutti e cinque
+i flip scelti alterano il bit di esponente 26, moltiplicando il peso per 256:
+la modifica è sparsa ma non numericamente piccola.
+
+La prima ricerca greedy aveva recuperato solo lo 0,4% sul test. Le configurazioni
+esplorative successive sono state confrontate sulla validazione: il miglior
+recall è salito al 35,4% con head escluso. Le alternative peggiori e le campagne
+interrotte sono conservate nel report. Il limite di 96 validazioni complete ha
+fermato la ricerca vincente a cinque flip; il budget era di 128 flip.
+
+I checkpoint selezionati e la configurazione sono stati congelati e verificati
+prima della valutazione test finale, senza rieseguire la ricerca. Tuttavia il
+medesimo test era già stato visto nell'esperimento iniziale: **conferma congelata
+su un test già esaminato**, non un nuovo dataset intatto. La ricerca usa esempi
+etichettati airplane; non è una prova causale di sola conoscenza residua. Le
+repliche seed 1/2 hanno protocollo fisso e risultati ancora pendenti.
+
+Dettagli e JSON archiviati: [report CIFAR-10](reports/resnet/RESULTS.md).
 
 ## 3. Fault casuali: nessun recupero sostanziale osservato
 
@@ -208,7 +243,7 @@ tecnica rispetto ad alternative con lo stesso accesso **resta da dimostrare**.
    successo, utilità, costo di ricerca, affidabilità e persistenza.
 
 **La conclusione oggi sostenibile è che pochi bit flip scelti mediante ricerca
-possono invertire la soppressione di una classe nel nostro piccolo modello,
+possono invertire almeno in parte la soppressione di una classe nei nostri modelli,
 mentre fault uniformemente casuali non hanno prodotto recuperi sostanziali
 nelle campagne eseguite. Cancellazione effettiva della conoscenza, generalità
 del fenomeno e vantaggio pratico di un attacco hardware restano questioni aperte.**

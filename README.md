@@ -1,14 +1,18 @@
 # Machine Unlearning Reversal via Fault Injection
 
 Sintesi dei risultati e dei limiti sperimentali, in italiano: [FINDINGS.md](FINDINGS.md).
+GPU experiment findings and frozen-test evidence: [ResNet results](reports/resnet/RESULTS.md).
 
 This is a first, benign image-classification experiment: can a small number of
 simulated weight-bit faults restore recognition of a forgotten CIFAR-10 class
 while preserving recognition of the other nine classes?
 
-**No CIFAR-10 result has been obtained yet.** The default experiment trains
-its own models. No pretrained or unlearned checkpoint has been downloaded.
-The smoke test uses synthetic data and validates the software pipeline only.
+**CIFAR-10 seed-0 frozen test:** five head-excluded software bit flips raised
+airplane accuracy from 0.0% to 34.2%, with retained accuracy 93.23% and airplane
+false-positive rate 0.86%. Seed-1/2 replications are pending; this is a simple
+relabeling baseline, not a state-of-the-art MU result. The experiment trains
+its own models; no third-party checkpoints have been imported. The smoke test
+uses synthetic data and validates the software pipeline only.
 
 ## Hardware and scope
 
@@ -69,6 +73,13 @@ The default forgotten class is 0, airplane. Change it with `--forget-class`.
 To use both cards on Linux, run separate processes with different run roots,
 seeds, and `--device cuda:0` / `--device cuda:1`, if both are visible there.
 
+If interrupted after original training and unlearning have both completed, use
+`--stage retrain` with the same run root and training settings. This preserves
+those two checkpoints, restarts retraining from its initialization (not its
+interrupted epoch), and then runs the search. Any partial retraining checkpoint
+is archived. Once all training finishes, `--stage search` reuses all three
+checkpoints without further training.
+
 Training stops before the search if the original validation forget or retain
 accuracy is below 70%, or if no unlearned checkpoint achieves forget accuracy
 at most 10% while retaining accuracy within five percentage points of the
@@ -98,6 +109,76 @@ Repeat with the output head excluded to check for trivial classifier repair:
 ```bash
 python pilot.py --stage search --root runs/seed0-class0 --exclude-head
 ```
+
+For exploratory searches on existing checkpoints, give each configuration a
+unique `--search-name` and use `--validation-only` to keep the official test
+split closed. For example:
+
+```bash
+python pilot.py --stage search --device cuda:1 --root runs/seed0-class0 \
+  --search-name search-beam64 --validation-only --algorithm beam \
+  --budget 64 --beam-width 3 --branch-factor 3 \
+  --candidate-weights 1024 --candidate-tests 64
+```
+
+The custom beam search keeps several distinct sets of flips rather than one
+greedy path. Each extension must improve discovery loss and pass the same
+retained-accuracy and false-positive constraints against the untouched model.
+Beam paths rank by validation forgotten-class accuracy, then discovery loss;
+all accepted children are considered for final checkpoint selection. This is
+a heuristic, not an exhaustive search. Increasing the budget does not force
+additional flips when every proposed extension fails.
+
+`--forget-weight 4` weights forgotten-example cross-entropy four times as
+strongly as retained-example cross-entropy, without relaxing the validation
+constraints. `--exclude-head` remains available for both algorithms. Histories
+are saved after each depth; diagnostics distinguish reaching the budget from
+running out of acceptable extensions. Validation-only results use
+`evaluation_split: selection` and contain no test metrics. Comparing multiple
+configurations on this selection split is exploratory tuning; confirmation
+requires a separately fixed evaluation and additional seeds/classes.
+
+For shorter, bounded searches, add `--cache-eval --ranking bit-change
+--screen-per-class 32 --validation-candidates 4 --max-candidate-evals 512
+--max-full-validations 48 --max-search-seconds 180`. The candidate ranking
+uses the largest beneficial gradient-times-change over valid storage flips,
+rather than weight magnitude as a proxy. Evaluation images are cached on the
+selected device (about 60 MiB for the 5,000 selection images).
+
+The screening subset comes from discovery examples outside the gradient
+probe. A custom utility score balances relative discovery-loss reduction
+against screening retain-accuracy loss and false-positive growth. Screening
+allows an extra `--screen-slack` (default two percentage points) to account
+for sampling noise, but every accepted flip must still pass the original
+constraints on the full selection split. Screening and shortlisting can miss
+good candidates; this is an exploratory efficiency tradeoff, not an exact
+replacement for exhaustive validation or a reproduction of TFL.
+
+Limits apply separately to each model's targeted search. Candidate limits
+count measured flip objectives; full-validation limits count candidate
+evaluations on the selection split. Diagnostics record both, screening
+evaluations, elapsed time, and `search_incomplete` when a cap is reached.
+The time limit is checked between operations; initialization, final audits,
+checkpoint saving, and random controls add overhead. Compare models under
+matching maximum budgets and report the work each actually used.
+
+To evaluate a validation-selected configuration without rerunning its search:
+
+```bash
+python pilot.py --stage evaluate --root runs/seed0-class0 \
+  --search-name search-beam64 --seed 0 --forget-class 0 --device cuda:1 --cache-eval
+```
+
+This loads the saved selected states, verifies their bit traces against the
+base checkpoints, and evaluates the official test split. Before evaluation it
+records checkpoint, configuration, split, and evaluator hashes in
+`frozen-test-manifest.json`. It saves `frozen-test-results.json` separately from
+validation results and refuses a second evaluation in the same directory.
+Eligibility and random-trial counts come from the saved search configuration.
+For seed replication, freeze all settings before viewing these results, retain
+failed training/unlearning gates, and select each seed's flips on validation
+data only. Reusing a previously examined test set is frozen confirmation,
+not a new untouched test set.
 
 ## Pretrained checkpoints
 
