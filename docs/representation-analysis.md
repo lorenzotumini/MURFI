@@ -18,13 +18,13 @@ repository root in PowerShell, using an existing Python installation:
 
 ```powershell
 python -m venv .venv
-.venv/Scripts/python.exe -m pip install -r requirements-representations.txt
+.venv/Scripts/python.exe -m pip install -r requirements-cpu.txt
 ```
 
 If the environment was created with `uv` without pip, use:
 
 ```powershell
-uv pip install --python .venv/Scripts/python.exe -r requirements-representations.txt
+uv pip install --python .venv/Scripts/python.exe -r requirements-cpu.txt
 ```
 
 The current laptop already has `.venv` with the CPU dependencies installed.
@@ -114,8 +114,7 @@ existing incorrect-label suppression baseline.
 ## Move between machines
 
 Transfer the changed source files, requirements file, tests, and this guide
-through your usual repository workflow. New files have not been committed or
-pushed automatically. `runs/`, `data/`, and `.venv/` are ignored by Git.
+through your usual repository workflow. `runs/`, `data/`, and `.venv/` are ignored by Git.
 
 Copy just `features.npz` from the desktop to run CPU analysis on the laptop.
 For the default ResNet sample count, activations occupy about 32 MiB before
@@ -126,80 +125,74 @@ The analysis uses exact neighbor search and Gram matrices, with quadratic
 time/memory in probe count; start with the default counts. Increasing probes
 to the entire dataset is not a streaming operation.
 
-## Metrics and figures
+## One report per run
 
-Each analysis directory contains:
+`representation_analysis.py analyze` computes everything and creates one
+`REPORT.md`. There is no separate relations command or report. The archived
+pilot reports are [seed 0](../reports/representations/seed0/REPORT.md),
+[seed 1](../reports/representations/seed1/REPORT.md), and
+[seed 2](../reports/representations/seed2/REPORT.md).
 
 | Artifact | Contents |
 |---|---|
-| `REPORT.md` | Readable comparison table and embedded figures |
-| `metrics.json` | Provenance, all metrics, counts, and neighbor degeneracy diagnostics |
+| `REPORT.md` | Behavior, representation metrics, figures, centering checks, and interpretation |
+| `metrics.json` | All comparisons, class relations, Euclidean checks, counts, and provenance |
 | `comparisons.csv` | Every model pair, layer, partition, and class/group |
-| `behavior.csv` | Accuracy and negative log-likelihood per model/group |
-| `layerwise.png` | Linear and debiased CKA on forget/retain inputs |
-| `neighbors.png` | Shared 10-neighbor fraction (or first requested k) |
-| `similarity.png` | Final-layer cosine matrices with identical example order |
-| `pca.png` | Common PCA projection after retained-calibration orthogonal alignment |
+| `behavior.csv` | Accuracy and negative log-likelihood |
+| `relations.csv` | Raw and centered class-average cosines, with valid pair counts |
+| `similarity_by_class.png` | Final-layer class relationships, excluding self-pairs |
+| `similarity_change.png` | Model differences, raw and centered, on one shared color scale |
+| `pca.png` | Retained-calibration alignment and common PCA; illustrative only |
+| `representation_metrics.png` | Combined CKA/neighbor curves, only when multiple layers exist |
 | `plot_diagnostics.json` | Calibration rank, held-out alignment residual, PCA variance |
 
-Linear CKA separately centers each evaluated group; it measures within-group
-geometry. The debiased variant uses unbiased HSIC estimates in the normalized
-ratio. The ratio itself is not an unbiased estimator and can be negative.
-Collapsed or insufficient samples produce `null`, never a fabricated zero.
-Five shuffled-row CKA scores provide a descriptive finite-sample reference,
-not a significance test. `--null-repeats` changes this count.
+Single-layer digits runs present CKA and neighbors in a table. Redundant
+individual-image heatmaps, forget profiles, and separate neighbor/CKA figures
+are no longer generated. The detailed numerical metrics are retained.
+Use `analyze --layer layer2` to choose another exported layer for cosine/PCA
+views; numerical CKA and neighbor comparisons always cover all layers.
 
-Neighbor overlap is `|N_A(i) intersect N_B(i)| / k`, with self excluded, cosine
-similarity, and `k=5,10,25`. Forget/retain groups select anchor rows, while their
-neighbors come from all classes in that partition. Zero vectors are excluded
-as anchors/candidates, valid-anchor counts are saved, and insufficient pools
-produce undefined scores. Ties use sample order, with tie fractions reported.
-The plotted `k/(n-1)` line is the uniform independent-neighbor reference; class
-structure and tied vectors can produce much higher overlap without memorization.
+### How to read the figures
 
-PCA and rotations use retained calibration examples only. All displayed models
-share the same PCA axes and axis limits. Rank-deficient calibration leaves part
-of a rotation underdetermined; see diagnostics. PCA variance refers to the
-calibration data. Quantitative conclusions use unreduced activations. UMAP and
-linear classifier probes are possible extensions, not implemented in this pilot.
+Each class-similarity cell compares images of its row and column classes
+within one model. It averages all held-out image pairs; the diagonal compares
+**different** images of the same class. Cosine is the dot product divided by
+vector lengths, so it ignores magnitude. Raw ReLU features are nonnegative
+and use a shared 0-to-1 scale. High cosine is not prediction confidence or
+proof of memorization. Class averaging can hide individual-example variation.
 
-## Retraining variability and research interpretation
+The difference figure's column titles give the subtraction order. Red means
+increased cosine; blue means decreased. The top row uses raw features, while
+the centered row subtracts each model mean over retained calibration examples.
+No rotation or dimensionality reduction enters either calculation. All panels
+in this figure share one signed scale. Across different runs, that scale may
+change. Centered plots are omitted if the bundle has no calibration examples.
 
-### Reading the cosine plot and alternative views
+The accompanying table includes both mean signed and mean absolute changes
+among retained classes. Signed changes can cancel; centering constrains
+aggregate geometry, so disappearance of a broad increase is not proof of a
+pure additive offset. Euclidean distance and activation-norm summaries provide
+an additional scale-sensitive check. Distances weight image pairs equally;
+class-cosine change summaries weight class pairs equally. Pair counts are not
+independent sample sizes.
 
-In the original `similarity.png`, every row and column is an **input image**,
-not a neuron. Up to 12 images per class are displayed, in the same order in
-all panels. The digit pilot shows 120 images: indices 0–11 are zeros, 12–23
-are ones, and so on. Class boundaries are marked with black lines. Each cell
-compares those two images' activation vectors within the panel's model.
+Linear CKA centers each evaluated group. Debiased CKA uses unbiased HSIC in a
+normalized ratio, but that ratio is not unbiased and can be negative. Collapsed
+or insufficient samples yield `null`. Shuffled-row CKA means are descriptive
+finite-sample references, not p-values; `--null-repeats` controls their count.
 
-The cosine is the dot product divided by the product of vector lengths.
-It measures direction, ignoring magnitude: an activation and twice that
-activation have cosine 1. The diagonal compares each image with itself, and
-is trivially 1 for nonzero vectors. Mirrored cells repeat the same information.
-Dark same-class blocks mean similar activation directions for different images
-of that digit; off-diagonal blocks compare different digits. ReLU features are
-nonnegative, so their cosines are nonnegative and the blue portion of the
-original -1 to +1 scale is unused. A high cosine is not a probability or
-evidence that the model memorized an example.
+Shared-neighbor scores use cosine with self excluded and k=5,10,25. Forget
+and retain groups select anchors; candidate neighbors include all classes in
+the partition. Zero vectors are excluded, insufficient pools yield undefined
+scores, and counts/tie fractions are recorded. Ties use sample order.
 
-Additional views summarize **all** held-out images, with no fitted alignment
-or dimensionality reduction:
+PCA and orthogonal alignment use retained calibration examples only. All model
+panels share axes and axis limits. Rank-deficient calibration leaves rotations
+outside its span underdetermined. The reported variance is calibration variance.
+A similar 2D position does not establish full-space equivalence. UMAP and linear
+classifier probes are not part of this implementation.
 
-```powershell
-python representation_relations.py --features runs/representations/digit0-seed0/features.npz --output-dir runs/representations/digit0-seed0/relations
-```
-
-Use `--layer layer2` for a particular ResNet stage; the default is the final
-exported layer. This produces `similarity_by_class.png`, where each cell is
-an average over image pairs, `similarity_change.png`, showing changes between
-models, and `forget_profile.png`, tracing the forget-class row. Same-class
-means exclude self-comparisons. `relations.csv` and `relations.json` record
-values, pair counts, and provenance. Pair counts are not independent sample
-sizes. Class averages can hide within-class changes. The ReLU raw summary
-uses 0–1; the difference plot uses a separate signed scale stated on its bar.
-
-[Seed 0 interpretation and views](../reports/representations/relations-seed0/REPORT.md).
+## Retraining variability and interpretation
 
 ### Independent retraining controls
 

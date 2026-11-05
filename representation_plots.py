@@ -1,8 +1,9 @@
-"""Static figures for representation_analysis; inference-free and CPU-only."""
+"""The unified report's figures; all statistical calculations live in analysis."""
+import itertools
 import numpy as np
 
 
-def make_plots(meta, arrays, rows, output, ks):
+def make_plots(meta, arrays, rows, output, ks, relations):
     import matplotlib
     matplotlib.use('Agg')
     import matplotlib.pyplot as plt
@@ -11,74 +12,87 @@ def make_plots(meta, arrays, rows, output, ks):
     plt.rcParams.update({'font.size': 10, 'axes.spines.top': False, 'axes.spines.right': False,
                          'figure.dpi': 130, 'savefig.dpi': 160})
     models, layers = meta['models'], meta['layers']
-    pairs = list(dict.fromkeys(r['pair'] for r in rows))
+    pairs = list(itertools.combinations(models, 2))
     heldout = arrays['partitions'] == 'heldout'
     cal = arrays['partitions'] == 'calibration'
-    retained = arrays['labels'] != meta['forget_class']
-    selected_rows = [r for r in rows if r['partition'] == 'heldout']
-    title = 'SYNTHETIC CONTROL' if meta['source'] == 'synthetic' else 'Exploratory representation comparison'
-
-    def series(pair, group, key):
-        values = []
-        for layer in layers:
-            found = [r for r in selected_rows if r['pair'] == pair and r['group'] == group and r['layer'] == layer]
-            val = found[0].get(key) if found else None
-            values.append(np.nan if val is None else val)
-        return values
-
-    fig, axes = plt.subplots(2, 2, figsize=(12, 7), squeeze=False, layout='constrained')
-    for col, group in enumerate(['forget', 'retain']):
-        for row, key in enumerate(['cka', 'cka_debiased']):
-            ax = axes[row, col]
-            for pair in pairs:
-                line, = ax.plot(layers, series(pair, group, key), marker='o', label=pair.replace('--', ' / '))
-                if key == 'cka':
-                    ax.plot(layers, series(pair, group, 'cka_permuted_mean'), ':', marker='x', color=line.get_color(), alpha=.6)
-            ax.set_title(f'{group.capitalize()} examples: {"linear CKA" if row == 0 else "debiased CKA"}')
-            ax.set_ylabel('Similarity')
-            ax.grid(alpha=.2)
-            ax.tick_params(axis='x', rotation=15)
-            # Comparable panels; do not magnify small differences by autoscaling.
-            ax.set_ylim(-.05 if row == 0 else -1.05, 1.05)
-    axes[0, 0].legend(fontsize=8)
-    fig.suptitle(title + '\nHeld-out inputs; dotted lines = shuffled-row CKA reference')
-    fig.savefig(output/'layerwise.png')
-    plt.close(fig)
-
-    fig, axes = plt.subplots(1, 2, figsize=(12, 4), layout='constrained')
-    k = 10 if 10 in ks else ks[0]
-    for ax, group in zip(axes, ['forget', 'retain']):
-        for pair in pairs:
-            ax.plot(layers, series(pair, group, f'knn_{k}'), marker='o', label=pair.replace('--', ' / '))
-        n = int(heldout.sum())
-        if n > k:
-            ax.axhline(k/(n-1), linestyle=':', color='grey', label='Uniform-neighbor chance reference')
-        ax.set(title=f'{group.capitalize()} anchors', ylabel=f'Shared {k}-NN fraction', ylim=(-.03, 1.03))
-        ax.grid(alpha=.2)
-    axes[0].legend(fontsize=8)
-    fig.suptitle('Local neighborhoods in the original feature spaces\nCandidate pool: all held-out classes; final projection is not used')
-    fig.savefig(output/'neighbors.png')
-    plt.close(fig)
-
-    last = layers[-1]
     labels = arrays['labels']
-    display = np.concatenate([np.flatnonzero(heldout & (labels == c))[:12] for c in np.unique(labels)])
-    if not len(display):
-        raise ValueError('Plotting requires held-out examples.')
-    fig, axes = plt.subplots(1, len(models), figsize=(4*len(models), 4), squeeze=False, layout='constrained')
-    boundaries = np.flatnonzero(np.diff(labels[display])) + .5
-    for ax, name in zip(axes[0], models):
-        h = arrays[feature_key(name, last)][display].astype(float)
-        norms = np.linalg.norm(h, axis=1, keepdims=True)
-        z = h / np.maximum(norms, 1e-30)
-        im = ax.imshow(z @ z.T, vmin=-1, vmax=1, cmap='coolwarm', interpolation='nearest')
-        for boundary in boundaries:
-            ax.axhline(boundary, color='black', linewidth=.3)
-            ax.axvline(boundary, color='black', linewidth=.3)
-        ax.set(title=name, xlabel='Same examples, ordered by class', ylabel='Example')
-    fig.colorbar(im, ax=list(axes[0]), shrink=.65, label='Cosine similarity')
-    fig.suptitle(f'{title}\n{last}: identical example order in every matrix')
-    fig.savefig(output/'similarity.png')
+    retained = labels != meta['forget_class']
+    last = relations['layer']
+    title = 'SYNTHETIC CONTROL' if meta['source'] == 'synthetic' else 'Exploratory representation comparison'
+    k = 10 if 10 in ks else ks[0]
+
+    # Single-layer runs use the report table instead of redundant single-point plots.
+    if len(layers) > 1:
+        fig, axes = plt.subplots(2, 2, figsize=(12, 7), layout='constrained')
+        for col, group in enumerate(['forget', 'retain']):
+            for row, key in enumerate(['cka_debiased', f'knn_{k}']):
+                ax = axes[row, col]
+                for first, second in pairs:
+                    pair = f'{first}--{second}'
+                    values = []
+                    for layer in layers:
+                        matches = [r for r in rows if r['partition'] == 'heldout' and r['group'] == group
+                                   and r['pair'] == pair and r['layer'] == layer]
+                        value = matches[0].get(key) if matches else None
+                        values.append(np.nan if value is None else value)
+                    ax.plot(layers, values, marker='o', label=f'{first} / {second}')
+                ax.set(title=f'{group.capitalize()}: {"debiased CKA" if row == 0 else f"shared {k}-NN"}',
+                       ylim=(-1.05 if row == 0 else -.05, 1.05))
+                ax.grid(alpha=.2)
+                ax.tick_params(axis='x', rotation=15)
+        axes[0, 0].legend(fontsize=8)
+        fig.suptitle(title + '\nFull-space representation metrics across layers')
+        fig.savefig(output/'representation_metrics.png', bbox_inches='tight')
+        plt.close(fig)
+
+    classes = relations['classes']
+    names = [meta['class_names'][c] for c in classes]
+    positions = {c: i for i, c in enumerate(classes)}
+    matrices = {(mode, model): np.full((len(classes), len(classes)), np.nan)
+                for mode in relations['modes'] for model in models}
+    for r in relations['blocks']:
+        value = r['mean_cosine']
+        matrices[r['mode'], r['model']][positions[r['class_a']], positions[r['class_b']]] = (
+            np.nan if value is None else value)
+
+    def heatmap(ax, values, caption, low, high, cmap):
+        im = ax.imshow(np.ma.masked_invalid(values), vmin=low, vmax=high, cmap=cmap)
+        ax.set_xticks(range(len(classes)), names, rotation=60, ha='right')
+        ax.set_yticks(range(len(classes)), names)
+        ax.set(title=caption, xlabel='Class of second image', ylabel='Class of first image')
+        if len(classes) <= 12:
+            for i in range(len(classes)):
+                for j in range(len(classes)):
+                    v = values[i, j]
+                    pos = (v-low)/(high-low) if np.isfinite(v) else .5
+                    ax.text(j, i, f'{v:.2f}' if np.isfinite(v) else 'NA', ha='center', va='center',
+                            color='white' if pos < .12 or pos > .88 else 'black', fontsize=7)
+        return im
+
+    nonnegative = all(np.all(arrays[feature_key(m, last)][heldout] >= 0) for m in models)
+    fig, axes = plt.subplots(1, len(models), figsize=(5*len(models)+.6, 5.3), squeeze=False, layout='constrained')
+    for ax, model in zip(axes[0], models):
+        im = heatmap(ax, matrices['raw', model], model, 0 if nonnegative else -1, 1,
+                     'YlOrRd' if nonnegative else 'coolwarm')
+    fig.colorbar(im, ax=list(axes[0]), shrink=.7, label='Mean cosine of distinct image pairs')
+    fig.suptitle(f'{title}: {last}\nRaw class relationships; self-comparisons excluded')
+    fig.savefig(output/'similarity_by_class.png', bbox_inches='tight', pad_inches=.15)
+    plt.close(fig)
+
+    modes = relations['modes']
+    differences = {(mode, first, second): matrices[mode, second]-matrices[mode, first]
+                   for mode in modes for first, second in pairs}
+    finite = np.concatenate([d[np.isfinite(d)] for d in differences.values()])
+    limit = max(float(np.max(np.abs(finite))) if len(finite) else 0, .01)
+    fig, axes = plt.subplots(len(modes), len(pairs), figsize=(5*len(pairs)+.6, 5.2*len(modes)),
+                             squeeze=False, layout='constrained')
+    for row, mode in enumerate(modes):
+        for col, (first, second) in enumerate(pairs):
+            im = heatmap(axes[row, col], differences[mode, first, second],
+                         f'{mode.capitalize()}: {second} minus {first}', -limit, limit, 'coolwarm')
+    fig.colorbar(im, ax=list(axes.ravel()), shrink=.7, label='Change in mean cosine (shared scale)')
+    fig.suptitle(f'{title}: {last}\nRed = increased similarity; blue = decreased. Centered rows subtract retained calibration means.')
+    fig.savefig(output/'similarity_change.png', bbox_inches='tight', pad_inches=.15)
     plt.close(fig)
 
     diagnostics = {'layer': last, 'reference': 'original', 'calibration_examples': int(cal.sum()),

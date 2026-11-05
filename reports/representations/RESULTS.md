@@ -1,4 +1,4 @@
-# Laptop representation pilot — 2026-11-05
+# Laptop representation pilot â€” 2026-11-05
 
 The CPU pipeline is implemented and has been run on the three archived
 digit-0 checkpoint trios, seeds 0, 1, and 2. No training, GPU, fault injection,
@@ -53,7 +53,7 @@ similarity alone cannot identify unsuccessful unlearning. CKA and neighbor
 overlap also do not always rank the pairs identically. The results establish a
 working diagnostic pipeline, not a universal signature of residual knowledge.
 
-![Shared PCA view for seed 0](digit0-seed0/pca.png)
+![Shared PCA view for seed 0](seed0/pca.png)
 
 The axes are common across the three panels. Forgotten digit-0 examples are
 marked with crosses. Calibration PCA explains about 49.6% of calibration
@@ -63,10 +63,10 @@ calibration span are underdetermined. See each `plot_diagnostics.json`.
 
 ## Evidence and reproduction
 
-The additional [class-level views and heatmap reading guide](relations-seed0/REPORT.md)
-show full-dimensional cosine relationships without alignment or PCA. Results
-are also available for [seed 1](relations-seed1/REPORT.md) and
-[seed 2](relations-seed2/REPORT.md).
+Each seed now has **one unified report** covering behavior, CKA and neighbors,
+class-average similarities, raw/centered changes, and PCA. The separate digit
+and relations report series have been removed. The raw numerical comparisons
+are exactly preserved after consolidation.
 
 For seed 0, mean similarity between **distinct zero images** is 0.9592 in the
 original, 0.9539 in the suppressed model, and 0.9431 after retraining. Mean
@@ -75,28 +75,47 @@ the zero representations remain coherent while their angular relationships
 with other classes change. These are descriptive values on the same small
 held-out set; they do not establish memorization or a causal mechanism.
 
-- [Seed 0 report](digit0-seed0/REPORT.md), [metrics](digit0-seed0/metrics.json).
-- [Seed 1 report](digit0-seed1/REPORT.md), [metrics](digit0-seed1/metrics.json).
-- [Seed 2 report](digit0-seed2/REPORT.md), [metrics](digit0-seed2/metrics.json).
+- [Seed 0 report](seed0/REPORT.md), [metrics](seed0/metrics.json).
+- [Seed 1 report](seed1/REPORT.md), [metrics](seed1/metrics.json).
+- [Seed 2 report](seed2/REPORT.md), [metrics](seed2/metrics.json).
 - [Compact cross-seed values](summary.json).
 - [Setup, exact commands, metrics, and desktop handoff](../../docs/representation-analysis.md).
 
-Every per-seed folder includes CSV tables, four PNG figures, and provenance
+Every per-seed folder includes CSV tables, three PNG figures, and provenance
 with source checkpoint/reference hashes. Portable feature bundles are in the
 ignored local `runs/representations/digit0-seed{seed}/features.npz` paths and can
 be regenerated from the archived weights. Git transfers the reports and code
 only after the new files are added through the usual workflow.
 
-Validation: ten new representation tests pass, including orthogonal invariance,
-shuffled correspondence, high-dimensional finite-sample bias, degenerate inputs,
-calibration separation, saved digits extraction, and end-to-end figure export.
-Seven existing CPU bit/fault tests also pass. Synthetic original/unlearned
-features related only by rotation give CKA and neighbor alignment of 1.
-Figures were inspected visually. PyTorch/CUDA tests were not run on this laptop.
+## Origin sensitivity
+
+The unified report now computes the centering and Euclidean checks directly,
+replacing the one-off `centering-check.json` calculation. For retained-class
+pairs, mean cosine changes after suppression are:
+
+| Seed | Raw mean change | Centered mean change | Centered mean absolute change |
+|---|---:|---:|---:|
+| 0 | +0.0456 | +0.0025 | 0.0237 |
+| 1 | +0.0851 | +0.0025 | 0.0228 |
+| 2 | +0.0729 | +0.0004 | 0.0254 |
+
+Centering uses each model's retained calibration mean. The broadly positive
+raw change becomes mixed after centering, but nonzero differences remain.
+Signed means can cancel, and centering constrains aggregate geometry; this
+is not proof that a common offset explains everything. Mean Euclidean
+separation among different retained classes decreases about 5–12% after
+suppression, a scale-sensitive observation rather than evidence of erasure.
+
+Validation: fourteen consolidated representation tests cover metric invariants,
+class summaries, retained-only centering, artifact integrity, and single- and
+multiple-layer report generation. Original metrics and raw class cosines were
+compared against the previous reports and match exactly in all three seeds.
+The figures were inspected visually. PyTorch/CUDA extraction remains untested
+on this laptop.
 
 ## Limits and next experiment
 
-There are only 17–18 held-out forget examples per seed. Scores are descriptive,
+There are only 17â€“18 held-out forget examples per seed. Scores are descriptive,
 without confidence intervals or an equivalence threshold. Original and retrained
 models share an initialization seed, and the existing seeds change data splits.
 These three configurations cannot estimate pure retrain/retrain variability.

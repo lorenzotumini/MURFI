@@ -254,7 +254,160 @@ def extract_synthetic(args):
     return args.output
 
 
-def analyze(bundle, output, ks=(5, 10, 25), null_repeats=5, seed=0):
+def class_cosines(features, labels, classes):
+    """Average example-pair cosines, not cosine between class centroids.
+
+    Same-class blocks exclude self-pairs and count each unordered pair once.
+    Zero vectors have undefined cosine and are excluded with counts recorded.
+    """
+    x = np.asarray(features, dtype=np.float64)
+    norms = np.linalg.norm(x, axis=1)
+    valid = norms > 0
+    z = x / np.where(valid, norms, 1)[:, None]
+    cosine = np.clip(z @ z.T, -1, 1)
+    means = np.full((len(classes), len(classes)), np.nan)
+    counts = np.zeros_like(means, dtype=int)
+    for i, first in enumerate(classes):
+        rows = np.flatnonzero((labels == first) & valid)
+        for j in range(i, len(classes)):
+            cols = np.flatnonzero((labels == classes[j]) & valid)
+            block = cosine[np.ix_(rows, cols)]
+            values = block[np.triu_indices(len(rows), k=1)] if i == j else block.ravel()
+            if len(values):
+                means[i, j] = means[j, i] = float(values.mean())
+            counts[i, j] = counts[j, i] = len(values)
+    return means, counts, int((~valid).sum())
+
+
+
+def compute_relations(meta, arrays, layer=None):
+    """Full-space class relationships, including retained-calibration centering."""
+    layer = layer or meta['layers'][-1]
+    if layer not in meta['layers']:
+        raise ValueError(f'Unknown layer: {layer}')
+    held = arrays['partitions'] == 'heldout'
+    cal = arrays['partitions'] == 'calibration'
+    if not held.any():
+        raise ValueError('At least one held-out example is required.')
+    yy = arrays['labels'][held]
+    classes = np.unique(yy)
+    blocks, summaries, euclidean = [], [], []
+    modes = ['raw', 'centered'] if cal.any() else ['raw']
+    means = {}
+    for mode in modes:
+        for model in meta['models']:
+            h = arrays[feature_key(model, layer)].astype(float)
+            if mode == 'centered':
+                h = h - h[cal].mean(0)
+            matrix, counts, zeros = class_cosines(h[held], yy, classes)
+            means[mode, model] = matrix
+            for i, first in enumerate(classes):
+                for j, second in enumerate(classes):
+                    value = matrix[i, j]
+                    blocks.append({'mode': mode, 'model': model, 'class_a': int(first),
+                                   'class_b': int(second), 'mean_cosine': float(value) if np.isfinite(value) else None,
+                                   'distinct_pairs': int(counts[i, j]), 'zero_vectors': zeros})
+        keep = classes != meta['forget_class']
+        pair_mask = np.triu(keep[:, None] & keep[None, :], 1)
+        for first, second in itertools.combinations(meta['models'], 2):
+            values = (means[mode, second]-means[mode, first])[pair_mask]
+            values = values[np.isfinite(values)]
+            summaries.append({'mode': mode, 'pair': f'{second} minus {first}',
+                              'retain_cross_mean_change': float(values.mean()) if len(values) else None,
+                              'retain_cross_mean_absolute_change': float(np.abs(values).mean()) if len(values) else None,
+                              'positive_class_pairs': int((values > 0).sum()), 'valid_class_pairs': len(values)})
+    retain = yy != meta['forget_class']
+    for model in meta['models']:
+        h = arrays[feature_key(model, layer)][held][retain].astype(float)
+        y = yy[retain]
+        pairs = np.triu(y[:, None] != y[None, :], 1)
+        sq = np.sum(h*h, axis=1)
+        dist = np.sqrt(np.maximum(sq[:, None]+sq[None, :]-2*h@h.T, 0))
+        euclidean.append({'model': model,
+                          'mean_cross_retain_distance': float(dist[pairs].mean()) if pairs.any() else None,
+                          'mean_activation_norm': float(np.linalg.norm(h, axis=1).mean()) if len(h) else None})
+    return {'layer': layer, 'classes': classes.tolist(), 'modes': modes, 'blocks': blocks,
+            'changes': summaries, 'euclidean': euclidean,
+            'heldout_counts': {str(c): int((yy == c).sum()) for c in classes},
+            'notes': ['Class cosines use all held-out examples; self-pairs and zero vectors are excluded.',
+                      'Centered cosines subtract each model retained-calibration mean; no alignment is fitted.',
+                      'Means can cancel; centered geometry constrains aggregates. Centering is not proof of a pure offset.',
+                      'Euclidean distances are scale-sensitive and pair-weighted; cosine summaries weight class pairs equally.',
+                      'Pair counts are not independent sample sizes. No confidence or causal claim.']}
+
+
+def write_report(result, diagnostics, output):
+    """One report containing behavior, metrics, geometry, and interpretation."""
+    meta, rel = result['metadata'], result['relations']
+    k = 10 if 10 in result['ks'] else result['ks'][0]
+    def fmt(x):
+        return 'undefined' if x is None else f'{x:.4f}'
+    lines = ['# Representation comparison', '',
+             f"Source: **{meta['source']}**; seed: **{meta.get('seed', 'unspecified')}**; "
+             f"forget class: **{meta['forget_class']}**. {meta.get('method', '')}.", '',
+             *[f'- {note}' for note in meta.get('notes', [])], '',
+             '## Behavior on held-out inputs', '',
+             '| Model | Group | n | Accuracy | NLL |', '|---|---|---:|---:|---:|']
+    for r in result['behavior']:
+        if r['partition'] == 'heldout' and r['group'] in ('forget', 'retain'):
+            lines.append(f"| {r['model']} | {r['group']} | {r['n']} | {r['accuracy']:.2%} | {fmt(r['nll'])} |")
+    lines += ['', '## Representation metrics', '',
+              'These metrics use unreduced activations before any fitted alignment. Higher values mean',
+              'more similar geometry or neighborhoods, not better unlearning. CKA is centered within',
+              'each group; neighbor candidates include all classes in the partition.', '',
+              f'| Layer | Group | Pair | n | CKA | Debiased CKA | Shuffled CKA | Shared {k}-NN | Prediction disagreement |',
+              '|---|---|---|---:|---:|---:|---:|---:|---:|']
+    for r in result['comparisons']:
+        if r['partition'] == 'heldout' and r['group'] in ('forget', 'retain'):
+            lines.append(f"| {r['layer']} | {r['group']} | {r['pair']} | {r['n']} | {fmt(r['cka'])} | "
+                         f"{fmt(r['cka_debiased'])} | {fmt(r['cka_permuted_mean'])} | {fmt(r[f'knn_{k}'])} | "
+                         f"{r['prediction_disagreement']:.2%} |")
+    if (output/'representation_metrics.png').exists():
+        lines += ['', '![Metrics across layers](representation_metrics.png)']
+    lines += ['', '## Class relationships', '',
+              f"Cosine and PCA views use **{rel['layer']}**. Each heatmap cell averages similarities between",
+              'images of its row and column classes. Diagonal cells compare distinct images of the same',
+              'class, excluding self-matches. Cosine measures direction, ignoring magnitude. ReLU features',
+              'are nonnegative, so raw cosines cannot be negative. Class means can hide variation.', '',
+              '![Class-average cosine](similarity_by_class.png)', '',
+              '## Changes and sensitivity to centering', '',
+              'Columns show the model subtraction in their titles. Red means increased cosine similarity;',
+              'blue means decreased similarity. Raw and centered rows share one signed color scale.',
+              'Centering subtracts each model mean on retained calibration examples only. The mean is not',
+              'fitted on these held-out images. No rotation or projection is used for these heatmaps.', '',
+              '![Raw and centered cosine changes](similarity_change.png)', '',
+              '| Coordinates | Model difference | Mean change among retained classes | Mean absolute change | Positive / valid pairs |',
+              '|---|---|---:|---:|---:|']
+    for r in rel['changes']:
+        lines.append(f"| {r['mode']} | {r['pair']} | {fmt(r['retain_cross_mean_change'])} | "
+                     f"{fmt(r['retain_cross_mean_absolute_change'])} | {r['positive_class_pairs']} / {r['valid_class_pairs']} |")
+    lines += ['', 'Signed means may cancel; centering also constrains aggregate geometry. Disappearance',
+              'of a broad signed increase does not prove that changes were entirely a common offset.', '',
+              '| Model | Mean Euclidean distance between retained classes | Mean retained activation norm |',
+              '|---|---:|---:|']
+    for r in rel['euclidean']:
+        lines.append(f"| {r['model']} | {fmt(r['mean_cross_retain_distance'])} | {fmt(r['mean_activation_norm'])} |")
+    lines += ['', 'Euclidean distances weight image pairs equally and are sensitive to scale. Pair counts',
+              'are not independent statistical samples; these comparisons are descriptive.', '', '## PCA overview', '']
+    if (output/'pca.png').exists():
+        variance = sum(diagnostics['pca_calibration_explained_variance_ratio'])
+        lines += ['![Shared aligned PCA](pca.png)', '',
+                  f'Two axes explain **{variance:.1%}** of calibration variance. Rotations/reflections and PCA',
+                  'are fitted on retained calibration examples only. A similar 2D position is not full-space equivalence.']
+    else:
+        lines += [f"PCA skipped: {diagnostics.get('pca_skipped', 'unavailable')}."]
+    lines += ['', *[f'- {n}' for n in diagnostics['notes']], '', '## Limits and numerical evidence', '',
+              *[f'- {n}' for n in result['notes']], '',
+              'A retrained model may retain a coherent forget-class representation through shared features.',
+              'High similarity alone cannot demonstrate residual training-data influence. Compare against',
+              'independent retraining on fixed retained data before claiming equivalence or removal.', '',
+              'All results and provenance are in [metrics.json](metrics.json). Detailed tables:',
+              '[comparisons](comparisons.csv), [behavior](behavior.csv), [class relations](relations.csv).',
+              '[Plot diagnostics](plot_diagnostics.json) record calibration rank and alignment residuals.', '']
+    (output/'REPORT.md').write_text('\n'.join(lines), encoding='utf-8')
+
+
+def analyze(bundle, output, ks=(5, 10, 25), null_repeats=5, seed=0, layer=None):
     from representation_plots import make_plots
     meta, a = load_bundle(bundle)
     output = Path(output)
@@ -315,7 +468,7 @@ def analyze(bundle, output, ks=(5, 10, 25), null_repeats=5, seed=0):
                         row[f'knn_{k}'] = float(values[valid].mean()) if valid.any() else None
                         row[f'knn_{k}_valid_anchors'] = int(valid.sum())
                     rows.append(row)
-    # All computations/validation precede output creation.
+    relations = compute_relations(meta, a, layer)
     output.mkdir(parents=True)
     result = {'metadata': meta, 'bundle_sha256': sha256(bundle), 'ks': list(ks),
               'analysis_seed': seed, 'null_repeats': null_repeats,
@@ -326,34 +479,17 @@ def analyze(bundle, output, ks=(5, 10, 25), null_repeats=5, seed=0):
                         'No confidence interval or equivalence claim from a single model trio.',
                         'Debiased CKA uses unbiased HSIC; its ratio is not an unbiased estimator.',
                         'Cosine ties use input row order; inspect neighbor_quality for degeneracy.'],
-              'comparisons': rows, 'behavior': behavior, 'neighbor_quality': quality}
+              'comparisons': rows, 'behavior': behavior, 'neighbor_quality': quality, 'relations': relations}
     write_json(output/'metrics.json', result)
-    for filename, records in [('comparisons.csv', rows), ('behavior.csv', behavior)]:
+    for filename, records in [('comparisons.csv', rows), ('behavior.csv', behavior), ('relations.csv', relations['blocks'])]:
         if records:
             with (output/filename).open('w', newline='', encoding='utf-8') as stream:
                 writer = csv.DictWriter(stream, fieldnames=list(records[0]))
                 writer.writeheader()
                 writer.writerows(records)
-    plot_notes = make_plots(meta, a, rows, output, ks)
+    plot_notes = make_plots(meta, a, rows, output, ks, relations)
     write_json(output/'plot_diagnostics.json', plot_notes)
-    lines = ['# Representation diagnostics', '', f"Source: **{meta['source']}**. {meta.get('method', '')}.", '',
-             *[f'- {note}' for note in meta.get('notes', [])+result['notes']], '',
-             '## Held-out comparisons', '',
-             '| Layer | Group | Pair | n | CKA | Debiased CKA | Permuted CKA |',
-             '|---|---|---|---:|---:|---:|---:|']
-    def fmt(v):
-        return 'undefined' if v is None else f'{v:.4f}'
-    for r in rows:
-        if r['partition'] == 'heldout' and r['group'] in ('forget', 'retain'):
-            lines.append(f"| {r['layer']} | {r['group']} | {r['pair']} | {r['n']} | "
-                         f"{fmt(r['cka'])} | {fmt(r['cka_debiased'])} | {fmt(r['cka_permuted_mean'])} |")
-    lines += ['', '## Figures', '', '![Layerwise geometry](layerwise.png)', '',
-              '![Local neighborhood alignment](neighbors.png)', '', '![Similarity matrices](similarity.png)', '']
-    if (output/'pca.png').exists():
-        lines += ['![Aligned PCA, illustrative only](pca.png)', '']
-    lines += ['Calibration and PCA limitations are recorded in `plot_diagnostics.json`.',
-              'Full class-specific and training-example results are in `comparisons.csv` and `metrics.json`.', '']
-    (output/'REPORT.md').write_text('\n'.join(lines), encoding='utf-8')
+    write_report(result, plot_notes, output)
     return result
 
 
@@ -378,6 +514,7 @@ def main():
     a.add_argument('--neighbors', type=int, nargs='+', default=[5, 10, 25])
     a.add_argument('--null-repeats', type=int, default=5)
     a.add_argument('--seed', type=int, default=0)
+    a.add_argument('--layer', help='Layer for cosine/PCA views; default: final exported layer.')
     args = p.parse_args()
     try:
         if args.command == 'digits':
@@ -387,7 +524,7 @@ def main():
         elif args.command == 'synthetic':
             result = extract_synthetic(args)
         else:
-            analyze(args.features, args.output_dir, tuple(dict.fromkeys(args.neighbors)), args.null_repeats, args.seed)
+            analyze(args.features, args.output_dir, tuple(dict.fromkeys(args.neighbors)), args.null_repeats, args.seed, args.layer)
             result = args.output_dir/'REPORT.md'
     except (ValueError, FileExistsError, FileNotFoundError) as e:
         p.error(str(e))

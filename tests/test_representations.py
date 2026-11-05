@@ -82,9 +82,19 @@ class BundleTests(unittest.TestCase):
                     self.assertAlmostEqual(row['cka_debiased'], 1, places=10)
                     self.assertEqual(row['knn_10'], 1)
             for name in ('metrics.json', 'comparisons.csv', 'behavior.csv', 'REPORT.md',
-                         'pca.png', 'layerwise.png', 'similarity.png', 'neighbors.png'):
+                         'pca.png', 'similarity_by_class.png', 'similarity_change.png', 'relations.csv'):
                 self.assertTrue((root/'analysis'/name).is_file(), name)
             json.loads((root/'analysis'/'metrics.json').read_text())
+            self.assertFalse((root/'analysis'/'representation_metrics.png').exists())
+            self.assertEqual(result['relations']['modes'], ['raw', 'centered'])
+            # Future ResNet runs have multiple layers and use the combined figure.
+            meta['layers'].append('second')
+            for model in meta['models']:
+                arrays[rep.feature_key(model, 'second')] = arrays[rep.feature_key(model, 'hidden')][:, :8]
+            rep.save_bundle(root/'multilayer.npz', meta, arrays)
+            multi = rep.analyze(root/'multilayer.npz', root/'multilayer', ks=(5,), null_repeats=1, layer='hidden')
+            self.assertEqual(multi['relations']['layer'], 'hidden')
+            self.assertTrue((root/'multilayer'/'representation_metrics.png').exists())
             with self.assertRaises(FileExistsError):
                 rep.analyze(bundle, root/'analysis')
             arrays['sample_ids'][1] = arrays['sample_ids'][0]
@@ -128,6 +138,50 @@ class BundleTests(unittest.TestCase):
         resnet.validate_splits({'train': [0, 1], 'search': [2], 'select': [3]}, total=4)
         with self.assertRaises(ValueError):
             resnet.validate_splits({'train': [0, 1], 'search': [1], 'select': [3]}, total=4)
+
+
+class ClassRelationTests(unittest.TestCase):
+    def test_centering_uses_calibration_and_removes_common_offset(self):
+        rng = np.random.default_rng(8)
+        h = rng.normal(size=(60, 5))
+        arrays = {'labels': np.tile([1, 2, 3], 20),
+                  'partitions': np.array(['calibration']*30+['heldout']*30),
+                  rep.feature_key('original', 'hidden'): h,
+                  rep.feature_key('unlearned', 'hidden'): h + 10}
+        meta = {'models': ['original', 'unlearned'], 'layers': ['hidden'], 'forget_class': 0}
+        result = rep.compute_relations(meta, arrays)
+        changes = {r['mode']: r for r in result['changes']}
+        self.assertGreater(changes['raw']['retain_cross_mean_change'], .5)
+        self.assertLess(changes['centered']['retain_cross_mean_absolute_change'], 1e-12)
+        arrays[rep.feature_key('unlearned', 'hidden')][30:] += 10
+        changed = rep.compute_relations(meta, arrays)
+        centered = [r for r in changed['changes'] if r['mode'] == 'centered'][0]
+        self.assertGreater(centered['retain_cross_mean_change'], .5)
+
+    def test_diagonal_excludes_self_and_cross_blocks_use_all_pairs(self):
+        x = np.array([[1., 0.], [0., 1.], [1., 1.], [1., 1.]])
+        mean, counts, zeros = rep.class_cosines(x, np.array([0, 0, 1, 1]), [0, 1])
+        np.testing.assert_allclose(mean, [[0, 1/np.sqrt(2)], [1/np.sqrt(2), 1]])
+        np.testing.assert_array_equal(counts, [[1, 4], [4, 1]])
+        self.assertEqual(zeros, 0)
+
+    def test_rotation_and_per_example_positive_scale_preserve_summary(self):
+        rng = np.random.default_rng(6)
+        x = rng.normal(size=(30, 8))
+        q, _ = np.linalg.qr(rng.normal(size=(8, 8)))
+        yy = np.arange(30) % 3
+        original = rep.class_cosines(x, yy, [0, 1, 2])[0]
+        changed = rep.class_cosines((x @ q)*rng.uniform(.1, 3, (30, 1)), yy, [0, 1, 2])[0]
+        np.testing.assert_allclose(original, changed, atol=1e-12)
+
+    def test_zero_vectors_and_singletons_are_not_self_similarity_evidence(self):
+        mean, counts, zeros = rep.class_cosines(np.array([[0., 0.], [1., 0.], [0., 1.]]),
+                                          np.array([0, 0, 1]), [0, 1])
+        self.assertTrue(np.isnan(np.diag(mean)).all())
+        self.assertEqual(mean[0, 1], 0)
+        np.testing.assert_array_equal(counts, [[0, 1], [1, 0]])
+        self.assertEqual(zeros, 1)
+
 
 
 if __name__ == '__main__':
