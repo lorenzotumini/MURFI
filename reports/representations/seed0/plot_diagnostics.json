@@ -1,0 +1,32 @@
+{
+  "layer": "hidden",
+  "reference": "original",
+  "calibration_examples": 163,
+  "notes": [
+    "Orthogonal maps and common PCA fitted only on retained calibration rows.",
+    "No labels are used to fit PCA or rotations; labels color the display.",
+    "A 2D projection can hide changes; numerical metrics use full feature spaces.",
+    "Calibration is rank-deficient: rotations outside its span are underdetermined."
+  ],
+  "alignment": {
+    "original": {
+      "calibration_rank": 56,
+      "feature_dimension": 64,
+      "heldout_retain_relative_residual": 0.0
+    },
+    "unlearned": {
+      "calibration_rank": 55,
+      "feature_dimension": 64,
+      "heldout_retain_relative_residual": 0.1798719544978168
+    },
+    "retrained": {
+      "calibration_rank": 58,
+      "feature_dimension": 64,
+      "heldout_retain_relative_residual": 0.16855938735510131
+    }
+  },
+  "pca_calibration_explained_variance_ratio": [
+    0.3010589983099931,
+    0.1948163012998958
+  ]
+}

@@ -73,11 +73,17 @@ directory. See the [random-flip guide](docs/random-flips.md) for the protocol an
 
 ## Reading and checking the work
 
+A separate [representation analysis](docs/representation-analysis.md) compares
+original, suppressed, and retrained models through matched-input activations,
+CKA, nearest-neighbor overlap, and PCA. It supports archived digits and ResNet
+checkpoints. See the [representation results](reports/representations/RESULTS.md).
+
 - [Cross-experiment findings and limitations](FINDINGS.md).
 - [Candidate external checkpoints](docs/checkpoint-candidates.md).
 
 Reports are organized as `reports/targeted-flips/cpu/`,
-`reports/targeted-flips/gpu/`, and `reports/random-flips/`. Each contains its
+`reports/targeted-flips/gpu/`, `reports/random-flips/`, and
+`reports/representations/`. Each contains its
 result report and supporting evidence. Downloaded datasets belong in `data/`;
 new run outputs belong in `runs/`. Both directories are ignored by Git.
 

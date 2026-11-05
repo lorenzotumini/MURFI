@@ -1,0 +1,31 @@
+{
+  "layer": "layer4",
+  "reference": "original",
+  "calibration_examples": 900,
+  "notes": [
+    "Orthogonal maps and common PCA fitted only on retained calibration rows.",
+    "No labels are used to fit PCA or rotations; labels color the display.",
+    "A 2D projection can hide changes; numerical metrics use full feature spaces."
+  ],
+  "alignment": {
+    "original": {
+      "calibration_rank": 512,
+      "feature_dimension": 512,
+      "heldout_retain_relative_residual": 0.0
+    },
+    "unlearned": {
+      "calibration_rank": 512,
+      "feature_dimension": 512,
+      "heldout_retain_relative_residual": 0.21155065578733148
+    },
+    "retrained": {
+      "calibration_rank": 512,
+      "feature_dimension": 512,
+      "heldout_retain_relative_residual": 0.3248882947109908
+    }
+  },
+  "pca_calibration_explained_variance_ratio": [
+    0.17443412853288257,
+    0.13269542676299634
+  ]
+}
