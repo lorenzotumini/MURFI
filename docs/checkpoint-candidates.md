@@ -11,7 +11,8 @@ scratch. The file listing confirms `resnet18_cifar10_full.pth` and
 `resnet18_cifar10_no_airplane.pth`, each about 44.8 MB. The documented network
 uses a 3x3 stride-1 first convolution, no initial max-pool, and ten outputs.
 Normalization is mean `(0.4914, 0.4822, 0.4465)`, std
-`(0.2023, 0.1994, 0.2010)`; this differs from the CIFAR-10 training configuration used here.
+`(0.2023, 0.1994, 0.2010)`; this differs from the CIFAR-10 training configuration
+used here.
 
 These class-excluded files are retrained controls, not approximate unlearning
 checkpoints. Their original initialization seeds and detailed dataset indices

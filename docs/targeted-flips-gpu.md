@@ -275,7 +275,7 @@ Run configuration, split indices, software versions, checkpoint metrics, and
 fault traces are saved. Training and fault search use FP32, with TF32 disabled.
 The script requests deterministic algorithms where possible, but does not
 guarantee identical results across GPU architectures. Record the NVIDIA driver
-version (`nvidia-smi`) and record the installed package versions:
+version (`nvidia-smi`) and installed package versions:
 
 ```bash
 mkdir -p runs

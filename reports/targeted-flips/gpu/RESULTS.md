@@ -189,7 +189,7 @@ not a continuation that changes this frozen replication's outcome.
 - [Test manifest and checkpoint/evaluator hashes](seed0-frozen-test-manifest.json).
 - [Exploratory search ledger, including stopped and unstarted runs](search-ledger.json).
 - [Frozen replication protocol](frozen-protocol.json) and [file checksum](frozen-protocol.json.sha256).
-- [Historical seed-0 status snapshot](confirmation-status-snapshot.json), retained unchanged.
+- [Historical seed-0 status snapshot](confirmation-status-snapshot.json).
 - [Seed-1 frozen test](seed1-frozen-test.json), [validation selection](seed1-selection-results.json),
   [test manifest](seed1-frozen-test-manifest.json), and [search trajectory](seed1-unlearned-search.json).
 - [Seed-2 frozen test](seed2-frozen-test.json), [validation selection](seed2-selection-results.json),
