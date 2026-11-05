@@ -1,4 +1,4 @@
-# Representation comparison: laptop now, desktop later
+# Representation comparison
 
 This experiment compares original, unlearned, and retained-only retrained
 models on identical inputs. It is independent of fault injection: extraction
@@ -102,8 +102,9 @@ python representation_analysis.py analyze --features runs/representations/resnet
 
 This uses randomly initialized **actual ResNet-18 models** and synthetic
 images. Its artifacts are clearly labeled synthetic and are not MU evidence.
-The laptop validation did not exercise PyTorch, CUDA, or real ResNet extraction;
-these checks remain for the desktop.
+The desktop validation exercised PyTorch and real ResNet extraction on CPU; CUDA
+remains untested because the NVIDIA driver was unavailable. See the
+[desktop results](../reports/representations/RESULTS.md#desktop-resnet-18-pilot).
 
 External SalUn or other checkpoints require a separately validated adapter:
 architecture compatibility alone does not establish preprocessing, original

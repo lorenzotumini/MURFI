@@ -2,8 +2,8 @@
 
 The CPU pipeline is implemented and has been run on the three archived
 digit-0 checkpoint trios, seeds 0, 1, and 2. No training, GPU, fault injection,
-or dataset download was needed. ResNet extraction is prepared for the desktop;
-it has not been run on actual ResNet checkpoints here.
+or dataset download was needed. The desktop run below extends the analysis to
+actual ResNet-18 checkpoints on CIFAR-10.
 
 ## What was compared
 
@@ -110,8 +110,8 @@ Validation: fourteen consolidated representation tests cover metric invariants,
 class summaries, retained-only centering, artifact integrity, and single- and
 multiple-layer report generation. Original metrics and raw class cosines were
 compared against the previous reports and match exactly in all three seeds.
-The figures were inspected visually. PyTorch/CUDA extraction remains untested
-on this laptop.
+The figures were inspected visually. Desktop CPU extraction is now validated;
+CUDA extraction remains untested because the NVIDIA driver was unavailable.
 
 ## Limits and next experiment
 
@@ -120,8 +120,46 @@ without confidence intervals or an equivalence threshold. Original and retrained
 models share an initialization seed, and the existing seeds change data splits.
 These three configurations cannot estimate pure retrain/retrain variability.
 
-On the desktop, extract the ResNet trio using the same analysis defaults, inspect
-all four stages, and add independently retrained models on an identical fixed
-retained dataset. Confirm that the original/retrained difference is detectable
+Add independently retrained models on an identical fixed retained dataset, and
+repeat the ResNet analysis across configurations. Confirm that the original/retrained difference is detectable
 before interpreting original/unlearned similarity. Repeat with a validated
 published unlearning method before extending conclusions beyond suppression.
+
+
+## Desktop ResNet-18 pilot
+
+The [seed 0 report](resnet-seed0/REPORT.md) and its figures, tables, numerical
+metrics and provenance are tracked alongside the digits results. The existing
+original, incorrect-label suppression, and retained-only retrained checkpoints
+were evaluated on the same CIFAR-10 inputs. The held-out search split contains
+100 airplane (forget) and 900 retained examples; 900 retained selection examples
+fit alignment and PCA. These previously used splits make the analysis exploratory.
+
+![ResNet shared PCA](resnet-seed0/pca.png)
+
+The airplane cloud is compact in the original and suppressed models, but spreads
+across the plot in the retrained model. Retained class clouds look broadly similar.
+This visible contrast is more pronounced than in the digits pilot and is a useful
+hypothesis for further study. The shared axes and orthogonal alignment are fitted
+on retained calibration examples; the two axes explain 30.7% of calibration
+variance, so the picture alone cannot establish full-space separation or erasure.
+
+Full-space metrics also show a layer-dependent difference. For held-out airplane
+examples, original/suppressed debiased CKA falls from 0.9996 at layer1 to 0.5396
+at layer4; original/retrained and suppressed/retrained layer4 values are 0.3572
+and 0.2169. Corresponding shared 10-neighbor fractions at layer4 are 0.400,
+0.122, and 0.115. On retained examples, layer4 debiased CKA is 0.9716, 0.9382,
+and 0.9149 respectively. These measures capture different aspects of geometry,
+and none alone establishes successful unlearning.
+
+Airplane accuracy falls from 97% in the original to 0% in both other models;
+the latter two still disagree on 60% of airplane predictions. Retained accuracy
+is 94.78%, 95.44%, and 94.33%, respectively. This is one checkpoint trio, with
+no fixed-split independent retraining controls or uncertainty estimates; differences
+cannot yet be attributed uniquely to suppression versus retraining variability.
+
+Validation used PyTorch on CPU: all 28 repository tests passed, as did a synthetic
+ResNet smoke extraction and analysis and the real checkpoint extraction. CUDA was
+unavailable because the NVIDIA driver could not be contacted. The feature bundle
+remains in ignored `runs/`; tracked outputs include the generated report and its
+supporting artifacts.
