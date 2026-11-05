@@ -436,14 +436,14 @@ def analyze(bundle, output, ks=(5, 10, 25), null_repeats=5, seed=0, layer=None):
                 behavior.append({'partition': partition, 'group': group, 'model': name, 'n': int(g.sum()),
                                  'accuracy': float(np.mean(pred[g] == yy[g])),
                                  'nll': float(-np.log(np.maximum(prob[g, yy[g]], 1e-30)).mean())})
-        for layer in meta['layers']:
-            features = {name: a[feature_key(name, layer)][mask] for name in meta['models']}
+        for metric_layer in meta['layers']:
+            features = {name: a[feature_key(name, metric_layer)][mask] for name in meta['models']}
             neighbors = {}
             for name, x in features.items():
                 for k in ks:
                     nn, diag = cosine_neighbors(x, k)
                     neighbors[name, k] = nn
-                    quality.append({'partition': partition, 'layer': layer, 'model': name, 'k': k, **diag})
+                    quality.append({'partition': partition, 'layer': metric_layer, 'model': name, 'k': k, **diag})
             for first, second in pairs:
                 overlap = {k: neighbor_overlap(neighbors[first, k], neighbors[second, k]) for k in ks}
                 p, q = a[f'probabilities__{first}'][mask], a[f'probabilities__{second}'][mask]
@@ -456,7 +456,7 @@ def analyze(bundle, output, ks=(5, 10, 25), null_repeats=5, seed=0, layer=None):
                     x, y = features[first][g], features[second][g]
                     null = [cka(x, y[rng.permutation(len(y))]) for _ in range(null_repeats)]
                     null = [v for v in null if v is not None]
-                    row = {'partition': partition, 'group': group, 'layer': layer,
+                    row = {'partition': partition, 'group': group, 'layer': metric_layer,
                            'pair': f'{first}--{second}', 'n': len(x),
                            'cka': cka(x, y), 'cka_debiased': cka(x, y, debiased=True),
                            'cka_permuted_mean': float(np.mean(null)) if null else None,
